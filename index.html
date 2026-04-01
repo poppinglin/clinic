@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>顧客健康記錄管理</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede8;
+    --text: #1a1a18; --text2: #6b6b67; --text3: #a0a09c;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --info-bg: #e6f1fb; --info-text: #185fa5;
+    --radius: 10px; --radius-sm: 7px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c; --bg2: #2a2a28; --bg3: #333330;
+      --text: #f0efe8; --text2: #a0a09a; --text3: #6a6a65;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --info-bg: #0c2840; --info-text: #85b7eb;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  .topbar { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar h1 { font-size: 16px; font-weight: 500; }
+  .status { font-size: 12px; color: var(--text2); }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; }
+  .tab-row { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab { padding: 7px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 0.5px solid var(--border2); color: var(--text2); background: transparent; transition: all 0.15s; }
+  .tab:hover { background: var(--bg2); }
+  .tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 12px; }
+  .section-label { font-size: 11px; color: var(--text3); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 12px; color: var(--text2); }
+  input, select, textarea {
+    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+    padding: 8px 10px; font-size: 13px; color: var(--text); font-family: inherit;
+    outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--text); }
+  textarea { min-height: 68px; resize: vertical; }
+  .btn { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; font-family: inherit; }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-danger { border-color: #f09595; color: #a32d2d; }
+  .btn-danger:hover { background: #fcebeb; }
+  .btn-sm { padding: 3px 9px; font-size: 11px; }
+  .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .search-bar input { flex: 1; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--info-bg); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 15px; color: var(--info-text); flex-shrink: 0; }
+  .customer-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .customer-name { font-weight: 500; font-size: 16px; }
+  .customer-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 14px 0; }
+  .visit-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 8px; background: var(--bg2); }
+  .visit-row { display: flex; gap: 6px; margin-bottom: 4px; align-items: flex-start; }
+  .visit-label { font-size: 12px; color: var(--text2); min-width: 52px; padding-top: 2px; flex-shrink: 0; }
+  .visit-value { font-size: 13px; flex: 1; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; }
+  .badge-improve { background: #eaf3de; color: #3b6d11; }
+  .badge-partial { background: #faeeda; color: #854f0b; }
+  .badge-none { background: #fcebeb; color: #a32d2d; }
+  .badge-unknown { background: var(--bg3); color: var(--text2); }
+  .symptom-tag { display: inline-block; background: var(--info-bg); color: var(--info-text); font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-right: 4px; margin-bottom: 2px; }
+  .visit-count { font-size: 12px; color: var(--text2); background: var(--bg2); padding: 2px 9px; border-radius: 20px; }
+  .improve-select { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .improve-opt { padding: 5px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 0.5px solid var(--border2); color: var(--text2); background: transparent; transition: all 0.12s; font-family: inherit; }
+  .improve-opt.sel-improve { background: #eaf3de; color: #3b6d11; border-color: #97c459; }
+  .improve-opt.sel-partial { background: #faeeda; color: #854f0b; border-color: #ef9f27; }
+  .improve-opt.sel-none { background: #fcebeb; color: #a32d2d; border-color: #f09595; }
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text2); font-size: 14px; }
+  .no-result { background: var(--bg2); border-radius: var(--radius); padding: 2rem 1rem; text-align: center; color: var(--text2); font-size: 14px; }
+  .msg-ok { color: #3b6d11; font-size: 13px; margin-left: 10px; }
+  .msg-err { color: #a32d2d; font-size: 13px; margin-left: 10px; }
+  .info-pill { font-size: 13px; padding: 6px 12px; background: var(--info-bg); color: var(--info-text); border-radius: var(--radius-sm); display: inline-block; }
+  .warn-pill { font-size: 13px; padding: 6px 12px; background: var(--bg2); color: var(--text2); border-radius: var(--radius-sm); display: inline-block; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .loading { text-align:center; padding: 2rem; color: var(--text2); font-size: 13px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sync-badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+  .sync-ok { background: #eaf3de; color: #3b6d11; }
+  .sync-err { background: #fcebeb; color: #a32d2d; }
+  .sync-ing { background: var(--bg3); color: var(--text2); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>顧客健康記錄管理</h1>
+  <span id="sync-status" class="sync-badge sync-ing">連線中...</span>
+</div>
+
+<div class="wrap">
+  <div class="tab-row">
+    <button class="tab active" onclick="switchTab('search',this)">查詢顧客</button>
+    <button class="tab" onclick="switchTab('add-customer',this)">新增顧客</button>
+    <button class="tab" onclick="switchTab('add-visit',this)">新增就診記錄</button>
+    <button class="tab" onclick="switchTab('list',this)">所有顧客</button>
+  </div>
+
+  <!-- 查詢 -->
+  <div id="tab-search" class="tab-content active">
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="輸入顧客電話號碼..." />
+      <button class="btn btn-primary" onclick="searchCustomer()">查詢</button>
+    </div>
+    <div id="search-result"><div class="empty">輸入電話號碼查詢顧客資料</div></div>
+  </div>
+
+  <!-- 新增顧客 -->
+  <div id="tab-add-customer" class="tab-content">
+    <div class="card">
+      <div class="section-label" style="margin-bottom:14px;">新增顧客資料</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>姓名（選填）</label>
+          <input type="text" id="new-name" placeholder="顧客姓名" />
+        </div>
+        <div class="form-group">
+          <label>電話 *</label>
+          <input type="text" id="new-phone" placeholder="0912345678" />
+        </div>
+        <div class="form-group">
+          <label>性別</label>
+          <select id="new-gender">
+            <option value="">不填</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>年齡</label>
+          <input type="number" id="new-age" placeholder="例：45" min="1" max="120" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>備註</label>
+        <textarea id="new-note" placeholder="其他備註（過敏、特殊狀況等）"></textarea>
+      </div>
+      <button class="btn btn-primary" id="btn-add-customer" onclick="addCustomer()">新增顧客</button>
+      <span id="add-customer-msg"></span>
+    </div>
+  </div>
+
+  <!-- 新增就診記錄 -->
+  <div id="tab-add-visit" class="tab-content">
+    <div class="card">
+      <div class="section-label" style="margin-bottom:14px;">新增就診記錄</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>顧客電話 *</label>
+          <input type="text" id="visit-phone" placeholder="輸入電話查找顧客" oninput="lookupVisitCustomer()" />
+        </div>
+        <div class="form-group">
+          <label>就診日期 *</label>
+          <input type="date" id="visit-date" />
+        </div>
+      </div>
+      <div id="visit-customer-info" style="margin-bottom:10px;"></div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>身體症狀（可填多個，用逗號分隔）*</label>
+        <textarea id="visit-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>處理方式</label>
+        <textarea id="visit-treatment" placeholder="例：推拿、針灸、熱敷..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>改善程度</label>
+        <div class="improve-select">
+          <button class="improve-opt" id="opt-improve" onclick="selectImprove('明顯改善')">明顯改善</button>
+          <button class="improve-opt" id="opt-partial" onclick="selectImprove('部分改善')">部分改善</button>
+          <button class="improve-opt" id="opt-none" onclick="selectImprove('未明顯改善')">未明顯改善</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>備註</label>
+        <input type="text" id="visit-note" placeholder="其他備註..." />
+      </div>
+      <button class="btn btn-primary" id="btn-add-visit" onclick="addVisit()">儲存記錄</button>
+      <span id="add-visit-msg"></span>
+    </div>
+  </div>
+
+  <!-- 所有顧客 -->
+  <div id="tab-list" class="tab-content">
+    <div id="all-customers-list"><div class="empty">請切換到此頁載入</div></div>
+  </div>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbz-jepGsar3BUUyHNX9RO-YrA8BvY7kiYcrkop01YQfgOT_bweCZ2VWkp-5ks950k_l/exec';
+let selectedImprovement = '';
+let customersCache = [];
+
+async function api(action, body={}) {
+  const url = API + '?action=' + action;
+  const res = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function setSyncStatus(state, text) {
+  const el = document.getElementById('sync-status');
+  el.textContent = text;
+  el.className = 'sync-badge ' + state;
+}
+
+async function loadCustomers() {
+  try {
+    setSyncStatus('sync-ing', '連線中...');
+    customersCache = await api('getCustomers');
+    setSyncStatus('sync-ok', '已連線 ✓');
+  } catch(e) {
+    setSyncStatus('sync-err', '連線失敗');
+  }
+}
+
+function displayName(c) { return c.name || c.phone; }
+function getInitials(c) { return c.name ? c.name.slice(0,2) : String(c.phone).slice(-2); }
+
+function improveBadge(v) {
+  if (v === '明顯改善') return '<span class="badge badge-improve">明顯改善</span>';
+  if (v === '部分改善') return '<span class="badge badge-partial">部分改善</span>';
+  if (v === '未明顯改善') return '<span class="badge badge-none">未明顯改善</span>';
+  return '<span class="badge badge-unknown">' + (v||'未填寫') + '</span>';
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'add-visit') {
+    document.getElementById('visit-date').value = new Date().toISOString().split('T')[0];
+  }
+  if (name === 'list') renderAllCustomers();
+}
+
+function loading(msg) {
+  return '<div class="loading"><span class="spinner"></span>' + (msg||'載入中...') + '</div>';
+}
+
+async function renderCustomerCard(customer) {
+  let visits = [];
+  try {
+    visits = await api('getVisits', { customerId: customer.id });
+  } catch(e) {}
+  const sorted = [...visits].sort((a,b) => String(b.date).localeCompare(String(a.date)));
+
+  let h = '<div class="card">';
+  h += '<div class="customer-header">';
+  h += '<div class="avatar">' + getInitials(customer) + '</div>';
+  h += '<div style="flex:1;"><div class="customer-name">' + displayName(customer) + '</div>';
+  h += '<div class="customer-sub">' + (customer.name ? customer.phone : '');
+  if (customer.gender || customer.age) h += (customer.name ? ' · ' : '') + (customer.gender||'') + (customer.age ? ' ' + customer.age + '歲' : '');
+  h += '</div></div>';
+  h += '<div style="display:flex;align-items:center;gap:8px;">';
+  h += '<span class="visit-count">共 ' + sorted.length + ' 次</span>';
+  h += '<button class="btn btn-danger btn-sm" onclick="deleteCustomer(\'' + customer.id + '\')">刪除顧客</button>';
+  h += '</div></div>';
+  if (customer.note) h += '<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">備註：' + customer.note + '</div>';
+  h += '<div class="divider"></div>';
+  if (sorted.length === 0) {
+    h += '<div style="color:var(--text2);font-size:13px;padding:6px 0;">尚無就診記錄</div>';
+  } else {
+    h += '<div class="section-label">就診記錄</div>';
+    sorted.forEach(v => {
+      const symptoms = Array.isArray(v.symptoms) ? v.symptoms : (v.symptoms ? v.symptoms.split(',') : []);
+      h += '<div class="visit-card">';
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+      h += '<span style="font-size:13px;font-weight:500;">' + v.date + '</span>';
+      h += '<div style="display:flex;align-items:center;gap:6px;">' + improveBadge(v.improvement);
+      h += '<button class="btn btn-danger btn-sm" onclick="deleteVisit(\'' + v.id + '\')">刪除</button></div></div>';
+      h += '<div class="visit-row"><span class="visit-label">症狀</span><span class="visit-value">' + symptoms.map(s=>'<span class="symptom-tag">'+s+'</span>').join('') + '</span></div>';
+      if (v.treatment) h += '<div class="visit-row"><span class="visit-label">處理</span><span class="visit-value">'+v.treatment+'</span></div>';
+      if (v.note) h += '<div class="visit-row"><span class="visit-label">備註</span><span class="visit-value" style="color:var(--text2);">'+v.note+'</span></div>';
+      h += '</div>';
+    });
+  }
+  h += '</div>';
+  return h;
+}
+
+async function searchCustomer() {
+  const q = document.getElementById('search-input').value.trim().replace(/[-\s]/g,'');
+  const el = document.getElementById('search-result');
+  if (!q) { el.innerHTML = '<div class="empty">輸入電話號碼查詢顧客資料</div>'; return; }
+  el.innerHTML = loading('查詢中...');
+  await loadCustomers();
+  const c = customersCache.find(c => String(c.phone).replace(/[-\s]/g,'').includes(q));
+  if (!c) {
+    el.innerHTML = '<div class="no-result">找不到電話「'+q+'」的顧客記錄<br><span style="font-size:12px;margin-top:6px;display:block;">請至「新增顧客」建立資料</span></div>';
+    return;
+  }
+  el.innerHTML = loading('載入就診記錄...');
+  el.innerHTML = await renderCustomerCard(c);
+}
+
+async function addCustomer() {
+  const name = document.getElementById('new-name').value.trim();
+  const phone = document.getElementById('new-phone').value.trim();
+  const gender = document.getElementById('new-gender').value;
+  const age = document.getElementById('new-age').value;
+  const note = document.getElementById('new-note').value.trim();
+  const msg = document.getElementById('add-customer-msg');
+  const btn = document.getElementById('btn-add-customer');
+  if (!phone) { msg.className='msg-err'; msg.textContent='電話為必填'; return; }
+  btn.disabled = true; btn.textContent = '新增中...';
+  try {
+    const res = await api('addCustomer', { name, phone, gender, age: age||'', note });
+    if (res.success) {
+      msg.className='msg-ok'; msg.textContent='✓ 顧客「'+(name||phone)+'」新增成功';
+      customersCache.push({ id: res.id, name, phone, gender, age: age||'', note });
+      document.getElementById('new-name').value='';
+      document.getElementById('new-phone').value='';
+      document.getElementById('new-gender').value='';
+      document.getElementById('new-age').value='';
+      document.getElementById('new-note').value='';
+    } else {
+      msg.className='msg-err'; msg.textContent='新增失敗，請再試一次';
+    }
+  } catch(e) {
+    msg.className='msg-err'; msg.textContent='連線錯誤，請確認網路';
+  }
+  btn.disabled = false; btn.textContent = '新增顧客';
+}
+
+function lookupVisitCustomer() {
+  const q = document.getElementById('visit-phone').value.trim().replace(/[-\s]/g,'');
+  const el = document.getElementById('visit-customer-info');
+  if (!q) { el.innerHTML=''; return; }
+  const c = customersCache.find(c => String(c.phone).replace(/[-\s]/g,'').includes(q));
+  if (c) {
+    el.innerHTML = '<span class="info-pill">找到顧客：'+displayName(c)+(c.age?' （'+c.age+'歲）':'')+'</span>';
+  } else {
+    el.innerHTML = '<span class="warn-pill">查無此電話，請先新增顧客</span>';
+  }
+}
+
+function selectImprove(val) {
+  selectedImprovement = val;
+  document.getElementById('opt-improve').className = 'improve-opt' + (val==='明顯改善'?' sel-improve':'');
+  document.getElementById('opt-partial').className = 'improve-opt' + (val==='部分改善'?' sel-partial':'');
+  document.getElementById('opt-none').className = 'improve-opt' + (val==='未明顯改善'?' sel-none':'');
+}
+
+async function addVisit() {
+  const phone = document.getElementById('visit-phone').value.trim().replace(/[-\s]/g,'');
+  const date = document.getElementById('visit-date').value;
+  const symptomsRaw = document.getElementById('visit-symptoms').value.trim();
+  const treatment = document.getElementById('visit-treatment').value.trim();
+  const note = document.getElementById('visit-note').value.trim();
+  const msg = document.getElementById('add-visit-msg');
+  const btn = document.getElementById('btn-add-visit');
+  const c = customersCache.find(c => String(c.phone).replace(/[-\s]/g,'').includes(phone));
+  if (!c) { msg.className='msg-err'; msg.textContent='找不到顧客，請先新增'; return; }
+  if (!date) { msg.className='msg-err'; msg.textContent='請填寫就診日期'; return; }
+  if (!symptomsRaw) { msg.className='msg-err'; msg.textContent='請填寫症狀'; return; }
+  const symptoms = symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
+  btn.disabled = true; btn.textContent = '儲存中...';
+  try {
+    const res = await api('addVisit', { customerId: c.id, date, symptoms, treatment, improvement: selectedImprovement||'未填寫', note });
+    if (res.success) {
+      msg.className='msg-ok'; msg.textContent='✓ 記錄已儲存';
+      document.getElementById('visit-symptoms').value='';
+      document.getElementById('visit-treatment').value='';
+      document.getElementById('visit-note').value='';
+      document.getElementById('visit-phone').value='';
+      document.getElementById('visit-customer-info').innerHTML='';
+      selectedImprovement=''; selectImprove('');
+    } else {
+      msg.className='msg-err'; msg.textContent='儲存失敗，請再試一次';
+    }
+  } catch(e) {
+    msg.className='msg-err'; msg.textContent='連線錯誤，請確認網路';
+  }
+  btn.disabled = false; btn.textContent = '儲存記錄';
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('確定要刪除此顧客及其所有就診記錄？')) return;
+  setSyncStatus('sync-ing', '刪除中...');
+  try {
+    await api('deleteCustomer', { id });
+    await loadCustomers();
+    document.getElementById('search-result').innerHTML = '<div class="empty">已刪除</div>';
+    renderAllCustomers();
+  } catch(e) { setSyncStatus('sync-err', '刪除失敗'); }
+}
+
+async function deleteVisit(id) {
+  if (!confirm('確定要刪除此筆就診記錄？')) return;
+  setSyncStatus('sync-ing', '刪除中...');
+  try {
+    await api('deleteVisit', { id });
+    setSyncStatus('sync-ok', '已連線 ✓');
+    const q = document.getElementById('search-input').value.trim();
+    if (q) searchCustomer();
+    renderAllCustomers();
+  } catch(e) { setSyncStatus('sync-err', '刪除失敗'); }
+}
+
+async function renderAllCustomers() {
+  const el = document.getElementById('all-customers-list');
+  el.innerHTML = loading('載入顧客清單...');
+  await loadCustomers();
+  if (customersCache.length === 0) { el.innerHTML = '<div class="empty">尚無顧客資料</div>'; return; }
+  const sorted = [...customersCache].sort((a,b) => displayName(a).localeCompare(displayName(b),'zh-TW'));
+  el.innerHTML = loading('載入就診記錄...');
+  const cards = await Promise.all(sorted.map(c => renderCustomerCard(c)));
+  el.innerHTML = cards.join('');
+}
+
+loadCustomers();
+</script>
+</body>
+</html>
