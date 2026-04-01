@@ -297,7 +297,11 @@ async function searchCustomer() {
   if (!q) { el.innerHTML = '<div class="empty">輸入電話號碼查詢顧客資料</div>'; return; }
   el.innerHTML = loading('查詢中...');
   await loadCustomers();
-  const c = customersCache.find(c => String(c.phone).replace(/[-\s]/g,'').includes(q));
+  const qNorm = q.replace(/^0+/, '');
+  const c = customersCache.find(c => {
+    const p = String(c.phone).replace(/[-\s]/g, '').replace(/^0+/, '');
+    return p === qNorm || p.includes(qNorm);
+  });
   if (!c) {
     el.innerHTML = '<div class="no-result">找不到電話「'+q+'」的顧客記錄<br><span style="font-size:12px;margin-top:6px;display:block;">請至「新增顧客」建立資料</span></div>';
     return;
@@ -339,7 +343,11 @@ function lookupVisitCustomer() {
   const q = document.getElementById('visit-phone').value.trim().replace(/[-\s]/g,'');
   const el = document.getElementById('visit-customer-info');
   if (!q) { el.innerHTML=''; return; }
-  const c = customersCache.find(c => String(c.phone).replace(/[-\s]/g,'').includes(q));
+  const qNorm = q.replace(/^0+/, '');
+  const c = customersCache.find(c => {
+    const p = String(c.phone).replace(/[-\s]/g, '').replace(/^0+/, '');
+    return p === qNorm || p.includes(qNorm);
+  });
   if (c) {
     el.innerHTML = '<span class="info-pill">找到顧客：'+displayName(c)+(c.age?' （'+c.age+'歲）':'')+'</span>';
   } else {
