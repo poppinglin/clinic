@@ -415,7 +415,7 @@ async function renderAllCustomers() {
   el.innerHTML = loading('載入顧客清單...');
   await loadCustomers();
   if (customersCache.length === 0) { el.innerHTML = '<div class="empty">尚無顧客資料</div>'; return; }
-  const sorted = [...customersCache].sort((a,b) => displayName(a).localeCompare(displayName(b),'zh-TW'));
+  const sorted = [...customersCache].sort((a,b) => String(displayName(a)).localeCompare(String(displayName(b)),'zh-TW'));
   el.innerHTML = loading('載入就診記錄...');
   const cards = await Promise.all(sorted.map(c => renderCustomerCard(c)));
   el.innerHTML = cards.join('');
