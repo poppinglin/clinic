@@ -236,6 +236,26 @@
             <input type="hidden" id="apt-time" />
           </div>
           <div class="form-group" style="margin-bottom:12px;"><label>備註</label><input type="text" id="apt-note" placeholder="備註（選填）" /></div>
+
+          <div style="border-top:0.5px solid var(--border);margin:14px 0 12px;"></div>
+          <div style="font-size:11px;color:var(--text3);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">就診記錄（選填）</div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>身體症狀（多個症狀用逗號分隔）</label>
+            <textarea id="apt-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛" style="min-height:60px;"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>處理方式</label>
+            <textarea id="apt-treatment" placeholder="例：推拿、針灸、熱敷..." style="min-height:60px;"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>改善程度</label>
+            <div class="improve-select">
+              <button class="improve-opt" id="apt-opt-improve" onclick="selectAptImprove('明顯改善')">明顯改善</button>
+              <button class="improve-opt" id="apt-opt-partial" onclick="selectAptImprove('部分改善')">部分改善</button>
+              <button class="improve-opt" id="apt-opt-none" onclick="selectAptImprove('未明顯改善')">未明顯改善</button>
+            </div>
+          </div>
+
           <button class="btn btn-primary" id="btn-add-apt" onclick="addAppointment()">確認新增</button>
           <button class="btn" style="margin-left:8px;" onclick="toggleAptForm(false)">取消</button>
           <span id="add-apt-msg"></span>
@@ -249,6 +269,7 @@
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbwhUodlZcCc5DEyDlr3LPqn72D64notj5Gyh2_RydDLn1V7dVzMi60JVJIIysJoDEKC/exec';
 let selectedImprovement = '';
+let selectedAptImprovement = '';
 let customersCache = [];
 let allAppointments = [];
 let calYear, calMonth, selectedDate = '';
@@ -509,6 +530,13 @@ function renderAptList() {
     </div>`).join('');
 }
 
+function selectAptImprove(val) {
+  selectedAptImprovement = val;
+  document.getElementById('apt-opt-improve').className='improve-opt'+(val==='明顯改善'?' sel-improve':'');
+  document.getElementById('apt-opt-partial').className='improve-opt'+(val==='部分改善'?' sel-partial':'');
+  document.getElementById('apt-opt-none').className='improve-opt'+(val==='未明顯改善'?' sel-none':'');
+}
+
 function handleTimeSelect() {
   const sel = document.getElementById('apt-time-select').value;
   const custom = document.getElementById('apt-time-custom');
@@ -531,6 +559,10 @@ function toggleAptForm(show) {
     document.getElementById('apt-time-select').value='';
     document.getElementById('apt-time-custom').style.display='none';
     document.getElementById('apt-time').value='';
+    document.getElementById('apt-symptoms').value='';
+    document.getElementById('apt-treatment').value='';
+    selectedAptImprovement='';
+    selectAptImprove('');
   }
 }
 
@@ -572,6 +604,16 @@ async function addAppointment() {
       document.getElementById('apt-phone').value='';
       document.getElementById('apt-time').value='';
       document.getElementById('apt-note').value='';
+      // 若有填就診記錄則一併儲存
+      const symptomsRaw=document.getElementById('apt-symptoms').value.trim();
+      const treatment=document.getElementById('apt-treatment').value.trim();
+      if (symptomsRaw && customerId) {
+        const symptoms=symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
+        await api('addVisit',{customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:''});
+      }
+      document.getElementById('apt-symptoms').value='';
+      document.getElementById('apt-treatment').value='';
+      selectedAptImprovement=''; selectAptImprove('');
       renderAptList();
       renderCalendar();
       setTimeout(()=>toggleAptForm(false),1500);
