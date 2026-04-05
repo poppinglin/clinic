@@ -210,6 +210,14 @@
           <div class="form-grid">
             <div class="form-group"><label>顧客姓名</label><input type="text" id="apt-name" placeholder="姓名（選填）" /></div>
             <div class="form-group"><label>電話 *</label><input type="text" id="apt-phone" placeholder="0912345678" /></div>
+            <div class="form-group"><label>性別</label>
+              <select id="apt-gender">
+                <option value="">不填</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+              </select>
+            </div>
+            <div class="form-group"><label>預約人數</label><input type="number" id="apt-count" placeholder="例：1" min="1" /></div>
           </div>
           <div class="form-group" style="margin-bottom:10px;">
             <label>預約時間 *</label>
@@ -522,7 +530,7 @@ function renderAptList() {
     <div class="apt-card">
       <div class="apt-time">${a.time}</div>
       <div class="apt-info">
-        <div class="apt-name">${a.customerName||'（未填姓名）'}</div>
+        <div class="apt-name">${a.customerName||'（未填姓名）'}${a.gender?' · '+a.gender:''}${a.count&&a.count>1?' · '+a.count+'人':''}</div>
         <div class="apt-phone">${a.phone||''}</div>
         ${a.note?'<div class="apt-note">'+a.note+'</div>':''}
       </div>
@@ -559,6 +567,8 @@ function toggleAptForm(show) {
     document.getElementById('apt-time-select').value='';
     document.getElementById('apt-time-custom').style.display='none';
     document.getElementById('apt-time').value='';
+    document.getElementById('apt-gender').value='';
+    document.getElementById('apt-count').value='';
     document.getElementById('apt-symptoms').value='';
     document.getElementById('apt-treatment').value='';
     selectedAptImprovement='';
@@ -586,7 +596,8 @@ async function addAppointment() {
     let customerId='';
     if (!existing) {
       msg.className='msg-ok'; msg.textContent='自動建立顧客資料中...';
-      const cRes=await api('addCustomer',{name,phone,gender:'',age:'',note:''});
+      const aptGender=document.getElementById('apt-gender').value;
+      const cRes=await api('addCustomer',{name,phone,gender:aptGender,age:'',note:''});
       if (cRes.success) {
         customerId=cRes.id;
         customersCache.push({id:cRes.id,name,phone,gender:'',age:'',note:''});
@@ -594,7 +605,8 @@ async function addAppointment() {
     } else {
       customerId=existing.id;
     }
-    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId});
+    const aptCount=document.getElementById('apt-count').value;
+    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId,count:aptCount||1});
     if(res.success) {
       allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note,customerId});
       const isNew=!existing;
@@ -602,6 +614,8 @@ async function addAppointment() {
       msg.textContent='✓ 預約新增成功'+(isNew?' （已自動建立顧客資料）':'');
       document.getElementById('apt-name').value='';
       document.getElementById('apt-phone').value='';
+      document.getElementById('apt-gender').value='';
+      document.getElementById('apt-count').value='';
       document.getElementById('apt-time').value='';
       document.getElementById('apt-note').value='';
       // 若有填就診記錄則一併儲存
