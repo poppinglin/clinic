@@ -35,11 +35,7 @@
   @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
   .form-group { display: flex; flex-direction: column; gap: 5px; }
   .form-group label { font-size: 12px; color: var(--text2); }
-  input, select, textarea {
-    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
-    padding: 8px 10px; font-size: 13px; color: var(--text); font-family: inherit;
-    outline: none; transition: border-color 0.15s; width: 100%;
-  }
+  input, select, textarea { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; transition: border-color 0.15s; width: 100%; }
   input:focus, select:focus, textarea:focus { border-color: var(--text); }
   textarea { min-height: 68px; resize: vertical; }
   .btn { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; font-family: inherit; }
@@ -85,12 +81,10 @@
   .sync-ok { background: #eaf3de; color: #3b6d11; }
   .sync-err { background: #fcebeb; color: #a32d2d; }
   .sync-ing { background: var(--bg3); color: var(--text2); }
-
-  /* 預約系統樣式 */
   .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-header h2 { font-size: 16px; font-weight: 500; }
   .cal-nav { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-size: 16px; color: var(--text); }
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 16px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px; }
   .cal-day-label { text-align: center; font-size: 11px; color: var(--text2); padding: 4px 0; font-weight: 500; }
   .cal-day { text-align: center; padding: 8px 4px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; border: 0.5px solid transparent; transition: all 0.12s; position: relative; }
   .cal-day:hover { background: var(--bg2); }
@@ -99,8 +93,6 @@
   .cal-day.other-month { color: var(--text3); }
   .cal-day.has-apt::after { content: ''; display: block; width: 5px; height: 5px; border-radius: 50%; background: #185fa5; margin: 2px auto 0; }
   .cal-day.selected.has-apt::after { background: var(--bg); }
-  .time-section { margin-top: 8px; }
-  .time-section-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; color: var(--text); }
   .apt-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 8px; background: var(--bg2); display: flex; align-items: center; justify-content: space-between; }
   .apt-time { font-size: 15px; font-weight: 500; color: var(--info-text); min-width: 52px; }
   .apt-info { flex: 1; margin-left: 12px; }
@@ -114,7 +106,7 @@
 <body>
 <div class="topbar">
   <h1>顧客健康記錄管理</h1>
-  <span id="sync-status" class="sync-badge sync-ing">連線中...</span>
+  <span id="sync-status" class="sync-badge sync-ing">載入中...</span>
 </div>
 <div class="wrap">
   <div class="tab-row">
@@ -125,7 +117,6 @@
     <button class="tab" onclick="switchTab('appointment',this)">預約管理</button>
   </div>
 
-  <!-- 查詢 -->
   <div id="tab-search" class="tab-content active">
     <div class="search-bar">
       <input type="text" id="search-input" placeholder="輸入顧客電話號碼..." />
@@ -134,7 +125,6 @@
     <div id="search-result"><div class="empty">輸入電話號碼查詢顧客資料</div></div>
   </div>
 
-  <!-- 新增顧客 -->
   <div id="tab-add-customer" class="tab-content">
     <div class="card">
       <div class="section-label" style="margin-bottom:14px;">新增顧客資料</div>
@@ -150,7 +140,6 @@
     </div>
   </div>
 
-  <!-- 新增就診記錄 -->
   <div id="tab-add-visit" class="tab-content">
     <div class="card">
       <div class="section-label" style="margin-bottom:14px;">新增就診記錄</div>
@@ -159,7 +148,7 @@
         <div class="form-group"><label>就診日期 *</label><input type="date" id="visit-date" /></div>
       </div>
       <div id="visit-customer-info" style="margin-bottom:10px;"></div>
-      <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（可填多個，用逗號分隔）*</label><textarea id="visit-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛"></textarea></div>
+      <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（多個症狀用逗號分隔）*</label><textarea id="visit-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛"></textarea></div>
       <div class="form-group" style="margin-bottom:10px;"><label>處理方式</label><textarea id="visit-treatment" placeholder="例：推拿、針灸、熱敷..."></textarea></div>
       <div class="form-group" style="margin-bottom:14px;">
         <label>改善程度</label>
@@ -175,15 +164,12 @@
     </div>
   </div>
 
-  <!-- 所有顧客 -->
   <div id="tab-list" class="tab-content">
     <div id="all-customers-list"><div class="empty">請切換到此頁載入</div></div>
   </div>
 
-  <!-- 預約管理 -->
   <div id="tab-appointment" class="tab-content">
     <div class="card">
-      <!-- 日曆 -->
       <div class="cal-header">
         <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
         <h2 id="cal-title"></h2>
@@ -196,47 +182,29 @@
         <div class="cal-day-label">日</div>
       </div>
       <div class="cal-grid" id="cal-body"></div>
-
       <div class="divider"></div>
-
-      <!-- 當天預約 -->
-      <div class="time-section">
-        <div class="time-section-title" id="apt-date-title">請選擇日期</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px;" id="apt-date-title">請選擇日期</div>
         <div id="apt-list"></div>
-
-        <!-- 新增預約表單 -->
         <div class="add-apt-form" id="add-apt-form" style="display:none;">
           <div class="add-apt-title">新增預約</div>
           <div class="form-grid">
             <div class="form-group"><label>顧客姓名</label><input type="text" id="apt-name" placeholder="姓名（選填）" /></div>
             <div class="form-group"><label>電話 *</label><input type="text" id="apt-phone" placeholder="0912345678" /></div>
-            <div class="form-group"><label>性別</label>
-              <select id="apt-gender">
-                <option value="">不填</option>
-                <option value="男">男</option>
-                <option value="女">女</option>
-              </select>
-            </div>
+            <div class="form-group"><label>性別</label><select id="apt-gender"><option value="">不填</option><option value="男">男</option><option value="女">女</option></select></div>
             <div class="form-group"><label>預約人數</label><input type="number" id="apt-count" placeholder="例：1" min="1" /></div>
           </div>
           <div class="form-group" style="margin-bottom:10px;">
             <label>預約時間 *</label>
             <select id="apt-time-select" onchange="handleTimeSelect()">
               <option value="">— 選擇時間 —</option>
-              <option value="08:40">08:40</option>
-              <option value="09:20">09:20</option>
-              <option value="10:00">10:00</option>
-              <option value="10:40">10:40</option>
-              <option value="11:20">11:20</option>
-              <option value="14:30">14:30</option>
-              <option value="15:10">15:10</option>
-              <option value="15:50">15:50</option>
-              <option value="16:30">16:30</option>
-              <option value="17:10">17:10</option>
-              <option value="17:50">17:50</option>
-              <option value="18:30">18:30</option>
-              <option value="19:10">19:10</option>
-              <option value="19:50">19:50</option>
+              <option value="08:40">08:40</option><option value="09:20">09:20</option>
+              <option value="10:00">10:00</option><option value="10:40">10:40</option>
+              <option value="11:20">11:20</option><option value="14:30">14:30</option>
+              <option value="15:10">15:10</option><option value="15:50">15:50</option>
+              <option value="16:30">16:30</option><option value="17:10">17:10</option>
+              <option value="17:50">17:50</option><option value="18:30">18:30</option>
+              <option value="19:10">19:10</option><option value="19:50">19:50</option>
               <option value="20:30">20:30</option>
               <option value="other">其他時間（自行輸入）</option>
             </select>
@@ -244,17 +212,10 @@
             <input type="hidden" id="apt-time" />
           </div>
           <div class="form-group" style="margin-bottom:12px;"><label>備註</label><input type="text" id="apt-note" placeholder="備註（選填）" /></div>
-
           <div style="border-top:0.5px solid var(--border);margin:14px 0 12px;"></div>
           <div style="font-size:11px;color:var(--text3);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">就診記錄（選填）</div>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>身體症狀（多個症狀用逗號分隔）</label>
-            <textarea id="apt-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛" style="min-height:60px;"></textarea>
-          </div>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>處理方式</label>
-            <textarea id="apt-treatment" placeholder="例：推拿、針灸、熱敷..." style="min-height:60px;"></textarea>
-          </div>
+          <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（多個症狀用逗號分隔）</label><textarea id="apt-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛" style="min-height:60px;"></textarea></div>
+          <div class="form-group" style="margin-bottom:10px;"><label>處理方式</label><textarea id="apt-treatment" placeholder="例：推拿、針灸、熱敷..." style="min-height:60px;"></textarea></div>
           <div class="form-group" style="margin-bottom:14px;">
             <label>改善程度</label>
             <div class="improve-select">
@@ -263,7 +224,6 @@
               <button class="improve-opt" id="apt-opt-none" onclick="selectAptImprove('未明顯改善')">未明顯改善</button>
             </div>
           </div>
-
           <button class="btn btn-primary" id="btn-add-apt" onclick="addAppointment()">確認新增</button>
           <button class="btn" style="margin-left:8px;" onclick="toggleAptForm(false)">取消</button>
           <span id="add-apt-msg"></span>
@@ -275,32 +235,41 @@
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbwhUodlZcCc5DEyDlr3LPqn72D64notj5Gyh2_RydDLn1V7dVzMi60JVJIIysJoDEKC/exec';
+const API = 'https://script.google.com/macros/s/AKfycbzBlGqUO6VrMjBpLQ8M460v_kpkygFfiY8V3RNw3z7zfqrALiGQ-72OQ27F6Y5614IF/exec';
+let customersCache = [];
+let visitsCache = [];
+let allAppointments = [];
 let selectedImprovement = '';
 let selectedAptImprovement = '';
-let customersCache = [];
-let allAppointments = [];
 let calYear, calMonth, selectedDate = '';
+let dataLoaded = false;
 
 async function api(action, body={}) {
-  const url = API + '?action=' + action;
-  const res = await fetch(url, { method:'POST', body: JSON.stringify(body) });
+  const res = await fetch(API+'?action='+action, { method:'POST', body: JSON.stringify(body) });
   return res.json();
 }
 
 function setSyncStatus(state, text) {
   const el = document.getElementById('sync-status');
-  el.textContent = text; el.className = 'sync-badge ' + state;
+  el.textContent = text; el.className = 'sync-badge '+state;
 }
 
-async function loadCustomers() {
+// 一次載入所有資料
+async function loadAll(force=false) {
+  if (dataLoaded && !force) return;
+  setSyncStatus('sync-ing','載入中...');
   try {
-    setSyncStatus('sync-ing','連線中...');
-    customersCache = await api('getCustomers');
+    const data = await api('getAll');
+    customersCache = data.customers || [];
+    visitsCache = data.visits || [];
+    allAppointments = data.appointments || [];
+    dataLoaded = true;
     setSyncStatus('sync-ok','已連線 ✓');
   } catch(e) { setSyncStatus('sync-err','連線失敗'); }
 }
 
+function normPhone(p) { return String(p).replace(/[-\s]/g,'').replace(/^0+/,''); }
+function findCustomer(phone) { const n=normPhone(phone); return customersCache.find(c=>normPhone(c.phone)===n); }
 function displayName(c) { return c.name || c.phone; }
 function getInitials(c) { return c.name ? c.name.slice(0,2) : String(c.phone).slice(-2); }
 
@@ -314,65 +283,59 @@ function improveBadge(v) {
 function loading(msg) { return '<div class="loading"><span class="spinner"></span>'+(msg||'載入中...')+'</div>'; }
 
 function switchTab(name, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
-  if (name==='add-visit') document.getElementById('visit-date').value = new Date().toISOString().split('T')[0];
+  if (name==='add-visit') document.getElementById('visit-date').value=new Date().toISOString().split('T')[0];
   if (name==='list') renderAllCustomers();
   if (name==='appointment') initCalendar();
 }
 
-async function renderCustomerCard(customer) {
-  let visits = [];
-  try { visits = await api('getVisits', { customerId: customer.id }); } catch(e) {}
-  const sorted = [...visits].sort((a,b) => String(b.date).localeCompare(String(a.date)));
-  let h = '<div class="card">';
-  h += '<div class="customer-header">';
-  h += '<div class="avatar">'+getInitials(customer)+'</div>';
-  h += '<div style="flex:1;"><div style="font-weight:500;font-size:16px;">'+displayName(customer)+'</div>';
-  h += '<div style="font-size:13px;color:var(--text2);">'+(customer.name?customer.phone:'');
-  if (customer.gender||customer.age) h += (customer.name?' · ':'')+(customer.gender||'')+(customer.age?' '+customer.age+'歲':'');
-  h += '</div></div>';
-  h += '<div style="display:flex;align-items:center;gap:8px;"><span class="visit-count">共 '+sorted.length+' 次</span>';
-  h += '<button class="btn btn-danger btn-sm" onclick="deleteCustomer(\''+customer.id+'\')">刪除顧客</button></div></div>';
-  if (customer.note) h += '<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">備註：'+customer.note+'</div>';
-  h += '<div class="divider"></div>';
-  if (sorted.length===0) {
-    h += '<div style="color:var(--text2);font-size:13px;padding:6px 0;">尚無就診記錄</div>';
+function renderCustomerCard(customer) {
+  const visits = visitsCache.filter(v=>String(v.customerId)===String(customer.id))
+    .sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  let h='<div class="card">';
+  h+='<div class="customer-header">';
+  h+='<div class="avatar">'+getInitials(customer)+'</div>';
+  h+='<div style="flex:1;"><div style="font-weight:500;font-size:16px;">'+displayName(customer)+'</div>';
+  h+='<div style="font-size:13px;color:var(--text2);">'+(customer.name?customer.phone:'');
+  if (customer.gender||customer.age) h+=(customer.name?' · ':'')+(customer.gender||'')+(customer.age?' '+customer.age+'歲':'');
+  h+='</div></div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;"><span class="visit-count">共 '+visits.length+' 次</span>';
+  h+='<button class="btn btn-danger btn-sm" onclick="deleteCustomer(\''+customer.id+'\')">刪除顧客</button></div></div>';
+  if (customer.note) h+='<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">備註：'+customer.note+'</div>';
+  h+='<div class="divider"></div>';
+  if (visits.length===0) {
+    h+='<div style="color:var(--text2);font-size:13px;padding:6px 0;">尚無就診記錄</div>';
   } else {
-    h += '<div class="section-label">就診記錄</div>';
-    sorted.forEach(v => {
-      const symptoms = Array.isArray(v.symptoms)?v.symptoms:(v.symptoms?String(v.symptoms).split(','):[]);
-      h += '<div class="visit-card">';
-      h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-      h += '<span style="font-size:13px;font-weight:500;">'+v.date+'</span>';
-      h += '<div style="display:flex;align-items:center;gap:6px;">'+improveBadge(v.improvement);
-      h += '<button class="btn btn-danger btn-sm" onclick="deleteVisit(\''+v.id+'\')">刪除</button></div></div>';
-      h += '<div class="visit-row"><span class="visit-label">症狀</span><span class="visit-value">'+symptoms.map(s=>'<span class="symptom-tag">'+s+'</span>').join('')+'</span></div>';
-      if (v.treatment) h += '<div class="visit-row"><span class="visit-label">處理</span><span class="visit-value">'+v.treatment+'</span></div>';
-      if (v.note) h += '<div class="visit-row"><span class="visit-label">備註</span><span class="visit-value" style="color:var(--text2);">'+v.note+'</span></div>';
-      h += '</div>';
+    h+='<div class="section-label">就診記錄</div>';
+    visits.forEach(v=>{
+      const syms=Array.isArray(v.symptoms)?v.symptoms:(v.symptoms?String(v.symptoms).split(','):[]);
+      h+='<div class="visit-card">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+      h+='<span style="font-size:13px;font-weight:500;">'+v.date+'</span>';
+      h+='<div style="display:flex;align-items:center;gap:6px;">'+improveBadge(v.improvement);
+      h+='<button class="btn btn-danger btn-sm" onclick="deleteVisit(\''+v.id+'\')">刪除</button></div></div>';
+      h+='<div class="visit-row"><span class="visit-label">症狀</span><span class="visit-value">'+syms.map(s=>'<span class="symptom-tag">'+s+'</span>').join('')+'</span></div>';
+      if (v.treatment) h+='<div class="visit-row"><span class="visit-label">處理</span><span class="visit-value">'+v.treatment+'</span></div>';
+      if (v.note) h+='<div class="visit-row"><span class="visit-label">備註</span><span class="visit-value" style="color:var(--text2);">'+v.note+'</span></div>';
+      h+='</div>';
     });
   }
-  h += '</div>';
+  h+='</div>';
   return h;
 }
 
 async function searchCustomer() {
-  const q = document.getElementById('search-input').value.trim().replace(/[-\s]/g,'');
+  const q = document.getElementById('search-input').value.trim();
   const el = document.getElementById('search-result');
   if (!q) { el.innerHTML='<div class="empty">輸入電話號碼查詢顧客資料</div>'; return; }
   el.innerHTML = loading('查詢中...');
-  await loadCustomers();
-  const qNorm = q.replace(/^0+/,'');
-  const c = customersCache.find(c => {
-    const p = String(c.phone).replace(/[-\s]/g,'').replace(/^0+/,'');
-    return p===qNorm || p.includes(qNorm);
-  });
+  await loadAll();
+  const c = findCustomer(q);
   if (!c) { el.innerHTML='<div class="no-result">找不到電話「'+q+'」的顧客記錄<br><span style="font-size:12px;margin-top:6px;display:block;">請至「新增顧客」建立資料</span></div>'; return; }
-  el.innerHTML = loading('載入就診記錄...');
-  el.innerHTML = await renderCustomerCard(c);
+  el.innerHTML = renderCustomerCard(c);
 }
 
 async function addCustomer() {
@@ -388,8 +351,9 @@ async function addCustomer() {
   try {
     const res=await api('addCustomer',{name,phone,gender,age:age||'',note});
     if (res.success) {
+      const newC={id:res.id,name,phone,gender,age:age||'',note};
+      customersCache.push(newC);
       msg.className='msg-ok'; msg.textContent='✓ 顧客「'+(name||phone)+'」新增成功';
-      customersCache.push({id:res.id,name,phone,gender,age:age||'',note});
       document.getElementById('new-name').value='';
       document.getElementById('new-phone').value='';
       document.getElementById('new-gender').value='';
@@ -401,11 +365,10 @@ async function addCustomer() {
 }
 
 function lookupVisitCustomer() {
-  const q=document.getElementById('visit-phone').value.trim().replace(/[-\s]/g,'');
+  const q=document.getElementById('visit-phone').value.trim();
   const el=document.getElementById('visit-customer-info');
   if (!q) { el.innerHTML=''; return; }
-  const qNorm=q.replace(/^0+/,'');
-  const c=customersCache.find(c=>{const p=String(c.phone).replace(/[-\s]/g,'').replace(/^0+/,'');return p===qNorm||p.includes(qNorm);});
+  const c=findCustomer(q);
   if (c) el.innerHTML='<span class="info-pill">找到顧客：'+displayName(c)+(c.age?' （'+c.age+'歲）':'')+'</span>';
   else el.innerHTML='<span class="warn-pill">查無此電話，請先新增顧客</span>';
 }
@@ -418,15 +381,14 @@ function selectImprove(val) {
 }
 
 async function addVisit() {
-  const phone=document.getElementById('visit-phone').value.trim().replace(/[-\s]/g,'');
+  const phone=document.getElementById('visit-phone').value.trim();
   const date=document.getElementById('visit-date').value;
   const symptomsRaw=document.getElementById('visit-symptoms').value.trim();
   const treatment=document.getElementById('visit-treatment').value.trim();
   const note=document.getElementById('visit-note').value.trim();
   const msg=document.getElementById('add-visit-msg');
   const btn=document.getElementById('btn-add-visit');
-  const qNorm=phone.replace(/^0+/,'');
-  const c=customersCache.find(c=>{const p=String(c.phone).replace(/[-\s]/g,'').replace(/^0+/,'');return p===qNorm||p.includes(qNorm);});
+  const c=findCustomer(phone);
   if (!c) { msg.className='msg-err'; msg.textContent='找不到顧客，請先新增'; return; }
   if (!date) { msg.className='msg-err'; msg.textContent='請填寫就診日期'; return; }
   if (!symptomsRaw) { msg.className='msg-err'; msg.textContent='請填寫症狀'; return; }
@@ -435,6 +397,7 @@ async function addVisit() {
   try {
     const res=await api('addVisit',{customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note});
     if (res.success) {
+      visitsCache.push({id:res.id,customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note});
       msg.className='msg-ok'; msg.textContent='✓ 記錄已儲存';
       document.getElementById('visit-symptoms').value='';
       document.getElementById('visit-treatment').value='';
@@ -449,75 +412,81 @@ async function addVisit() {
 
 async function deleteCustomer(id) {
   if (!confirm('確定要刪除此顧客及其所有就診記錄？')) return;
-  try { await api('deleteCustomer',{id}); await loadCustomers(); document.getElementById('search-result').innerHTML='<div class="empty">已刪除</div>'; } catch(e) {}
+  try {
+    await api('deleteCustomer',{id});
+    customersCache=customersCache.filter(c=>String(c.id)!==String(id));
+    visitsCache=visitsCache.filter(v=>String(v.customerId)!==String(id));
+    document.getElementById('search-result').innerHTML='<div class="empty">已刪除</div>';
+    if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
+  } catch(e) { alert('刪除失敗，請再試一次'); }
 }
 
 async function deleteVisit(id) {
   if (!confirm('確定要刪除此筆就診記錄？')) return;
-  try { await api('deleteVisit',{id}); const q=document.getElementById('search-input').value.trim(); if(q) searchCustomer(); } catch(e) {}
+  try {
+    await api('deleteVisit',{id});
+    visitsCache=visitsCache.filter(v=>String(v.id)!==String(id));
+    const q=document.getElementById('search-input').value.trim();
+    if (q) searchCustomer();
+    if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
+  } catch(e) { alert('刪除失敗，請再試一次'); }
 }
 
-async function renderAllCustomers() {
+function renderAllCustomers() {
   const el=document.getElementById('all-customers-list');
-  el.innerHTML=loading('載入顧客清單...');
-  await loadCustomers();
+  if (!dataLoaded) { el.innerHTML=loading('載入中...'); loadAll().then(()=>renderAllCustomers()); return; }
   if (customersCache.length===0) { el.innerHTML='<div class="empty">尚無顧客資料</div>'; return; }
   const sorted=[...customersCache].sort((a,b)=>String(displayName(a)).localeCompare(String(displayName(b)),'zh-TW'));
-  el.innerHTML=loading('載入就診記錄...');
-  const cards=await Promise.all(sorted.map(c=>renderCustomerCard(c)));
-  el.innerHTML=cards.join('');
+  el.innerHTML=sorted.map(c=>renderCustomerCard(c)).join('');
 }
 
-// ===== 預約系統 =====
+// 預約系統
 async function initCalendar() {
   const now=new Date();
   if (!calYear) { calYear=now.getFullYear(); calMonth=now.getMonth(); }
-  setSyncStatus('sync-ing','載入預約...');
-  try { allAppointments=await api('getAppointments',{}); setSyncStatus('sync-ok','已連線 ✓'); } catch(e) { setSyncStatus('sync-err','連線失敗'); }
+  if (!dataLoaded) await loadAll();
   renderCalendar();
-  const today=now.toISOString().split('T')[0];
-  selectCalDay(today);
+  selectCalDay(now.toISOString().split('T')[0]);
 }
 
 function renderCalendar() {
   const months=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   document.getElementById('cal-title').textContent=calYear+'年 '+months[calMonth];
-  const body=document.getElementById('cal-body');
-  const first=new Date(calYear,calMonth,1);
   const lastDay=new Date(calYear,calMonth+1,0).getDate();
-  let startDow=first.getDay(); if(startDow===0) startDow=7; startDow--;
+  let startDow=new Date(calYear,calMonth,1).getDay();
+  if (startDow===0) startDow=7; startDow--;
   const today=new Date().toISOString().split('T')[0];
   const aptDates=new Set(allAppointments.map(a=>String(a.date)));
   let html='';
-  for(let i=0;i<startDow;i++) {
+  for (let i=0;i<startDow;i++) {
     const d=new Date(calYear,calMonth,1-startDow+i);
     html+='<div class="cal-day other-month">'+d.getDate()+'</div>';
   }
-  for(let d=1;d<=lastDay;d++) {
-    const dateStr=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  for (let d=1;d<=lastDay;d++) {
+    const ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     let cls='cal-day';
-    if(dateStr===today) cls+=' today';
-    if(dateStr===selectedDate) cls+=' selected';
-    if(aptDates.has(dateStr)) cls+=' has-apt';
-    html+='<div class="'+cls+'" onclick="selectCalDay(\''+dateStr+'\')">'+d+'</div>';
+    if (ds===today) cls+=' today';
+    if (ds===selectedDate) cls+=' selected';
+    if (aptDates.has(ds)) cls+=' has-apt';
+    html+='<div class="'+cls+'" onclick="selectCalDay(\''+ds+'\')">'+d+'</div>';
   }
-  const remaining=(7-((startDow+lastDay)%7))%7;
-  for(let i=1;i<=remaining;i++) html+='<div class="cal-day other-month">'+i+'</div>';
-  body.innerHTML=html;
+  const rem=(7-((startDow+lastDay)%7))%7;
+  for (let i=1;i<=rem;i++) html+='<div class="cal-day other-month">'+i+'</div>';
+  document.getElementById('cal-body').innerHTML=html;
 }
 
 function changeMonth(dir) {
   calMonth+=dir;
-  if(calMonth>11){calMonth=0;calYear++;}
-  if(calMonth<0){calMonth=11;calYear--;}
+  if (calMonth>11){calMonth=0;calYear++;}
+  if (calMonth<0){calMonth=11;calYear--;}
   renderCalendar();
 }
 
-function selectCalDay(dateStr) {
-  selectedDate=dateStr;
+function selectCalDay(ds) {
+  selectedDate=ds;
   renderCalendar();
-  const parts=dateStr.split('-');
-  document.getElementById('apt-date-title').textContent=parts[0]+'年'+parseInt(parts[1])+'月'+parseInt(parts[2])+'日 的預約';
+  const p=ds.split('-');
+  document.getElementById('apt-date-title').textContent=p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日 的預約';
   document.getElementById('btn-show-apt-form').style.display='inline-block';
   renderAptList();
 }
@@ -525,7 +494,7 @@ function selectCalDay(dateStr) {
 function renderAptList() {
   const el=document.getElementById('apt-list');
   const dayApts=allAppointments.filter(a=>String(a.date)===selectedDate).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
-  if(dayApts.length===0) { el.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0;">當天尚無預約</div>'; return; }
+  if (dayApts.length===0) { el.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0;">當天尚無預約</div>'; return; }
   el.innerHTML=dayApts.map(a=>`
     <div class="apt-card">
       <div class="apt-time">${a.time}</div>
@@ -538,31 +507,31 @@ function renderAptList() {
     </div>`).join('');
 }
 
+function handleTimeSelect() {
+  const sel=document.getElementById('apt-time-select').value;
+  const custom=document.getElementById('apt-time-custom');
+  const hidden=document.getElementById('apt-time');
+  if (sel==='other') {
+    custom.style.display='block';
+    custom.oninput=()=>{ hidden.value=custom.value.trim(); };
+    hidden.value='';
+  } else {
+    custom.style.display='none';
+    hidden.value=sel;
+  }
+}
+
 function selectAptImprove(val) {
-  selectedAptImprovement = val;
+  selectedAptImprovement=val;
   document.getElementById('apt-opt-improve').className='improve-opt'+(val==='明顯改善'?' sel-improve':'');
   document.getElementById('apt-opt-partial').className='improve-opt'+(val==='部分改善'?' sel-partial':'');
   document.getElementById('apt-opt-none').className='improve-opt'+(val==='未明顯改善'?' sel-none':'');
 }
 
-function handleTimeSelect() {
-  const sel = document.getElementById('apt-time-select').value;
-  const custom = document.getElementById('apt-time-custom');
-  const hidden = document.getElementById('apt-time');
-  if (sel === 'other') {
-    custom.style.display = 'block';
-    custom.oninput = () => { hidden.value = custom.value.trim(); };
-    hidden.value = '';
-  } else {
-    custom.style.display = 'none';
-    hidden.value = sel;
-  }
-}
-
 function toggleAptForm(show) {
   document.getElementById('add-apt-form').style.display=show?'block':'none';
   document.getElementById('btn-show-apt-form').style.display=show?'none':'inline-block';
-  if(!show){
+  if (!show) {
     document.getElementById('add-apt-msg').textContent='';
     document.getElementById('apt-time-select').value='';
     document.getElementById('apt-time-custom').style.display='none';
@@ -571,65 +540,62 @@ function toggleAptForm(show) {
     document.getElementById('apt-count').value='';
     document.getElementById('apt-symptoms').value='';
     document.getElementById('apt-treatment').value='';
-    selectedAptImprovement='';
-    selectAptImprove('');
+    selectedAptImprovement=''; selectAptImprove('');
   }
 }
 
 async function addAppointment() {
   const name=document.getElementById('apt-name').value.trim();
   const phone=document.getElementById('apt-phone').value.trim();
-  const time=document.getElementById('apt-time').value.trim();
+  const gender=document.getElementById('apt-gender').value;
+  const count=document.getElementById('apt-count').value;
+  const time=document.getElementById('apt-time').value;
   const note=document.getElementById('apt-note').value.trim();
   const msg=document.getElementById('add-apt-msg');
   const btn=document.getElementById('btn-add-apt');
   if (!phone) { msg.className='msg-err'; msg.textContent='電話為必填'; return; }
-  if (!time) { msg.className='msg-err'; msg.textContent='請填寫預約時間'; return; }
+  if (!time) { msg.className='msg-err'; msg.textContent='請選擇或填寫預約時間'; return; }
   if (!selectedDate) { msg.className='msg-err'; msg.textContent='請先選擇日期'; return; }
   btn.disabled=true; btn.textContent='新增中...';
   try {
-    const phoneNorm=phone.replace(/[-\s]/g,'').replace(/^0+/,'');
-    const existing=customersCache.find(c=>{
-      const p=String(c.phone).replace(/[-\s]/g,'').replace(/^0+/,'');
-      return p===phoneNorm;
-    });
+    // 自動建立新顧客
+    let existing=findCustomer(phone);
     let customerId='';
     if (!existing) {
       msg.className='msg-ok'; msg.textContent='自動建立顧客資料中...';
-      const aptGender=document.getElementById('apt-gender').value;
-      const cRes=await api('addCustomer',{name,phone,gender:aptGender,age:'',note:''});
+      const cRes=await api('addCustomer',{name,phone,gender,age:'',note:''});
       if (cRes.success) {
         customerId=cRes.id;
-        customersCache.push({id:cRes.id,name,phone,gender:'',age:'',note:''});
+        existing={id:cRes.id,name,phone,gender,age:'',note:''};
+        customersCache.push(existing);
       }
-    } else {
-      customerId=existing.id;
-    }
-    const aptCount=document.getElementById('apt-count').value;
-    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId,count:aptCount||1});
-    if(res.success) {
-      allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note,customerId});
-      const isNew=!existing;
-      msg.className='msg-ok';
-      msg.textContent='✓ 預約新增成功'+(isNew?' （已自動建立顧客資料）':'');
-      document.getElementById('apt-name').value='';
-      document.getElementById('apt-phone').value='';
-      document.getElementById('apt-gender').value='';
-      document.getElementById('apt-count').value='';
-      document.getElementById('apt-time').value='';
-      document.getElementById('apt-note').value='';
+    } else { customerId=existing.id; }
+
+    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1});
+    if (res.success) {
+      allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1});
       // 若有填就診記錄則一併儲存
       const symptomsRaw=document.getElementById('apt-symptoms').value.trim();
       const treatment=document.getElementById('apt-treatment').value.trim();
       if (symptomsRaw && customerId) {
         const symptoms=symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
-        await api('addVisit',{customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:''});
+        const vRes=await api('addVisit',{customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:''});
+        if (vRes.success) visitsCache.push({id:vRes.id,customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:''});
       }
+      const isNew=!findCustomer(phone)||customerId!==existing.id;
+      msg.className='msg-ok'; msg.textContent='✓ 預約新增成功'+(isNew?' （已自動建立顧客資料）':'');
+      document.getElementById('apt-name').value='';
+      document.getElementById('apt-phone').value='';
+      document.getElementById('apt-gender').value='';
+      document.getElementById('apt-count').value='';
+      document.getElementById('apt-time-select').value='';
+      document.getElementById('apt-time-custom').style.display='none';
+      document.getElementById('apt-time').value='';
+      document.getElementById('apt-note').value='';
       document.getElementById('apt-symptoms').value='';
       document.getElementById('apt-treatment').value='';
       selectedAptImprovement=''; selectAptImprove('');
-      renderAptList();
-      renderCalendar();
+      renderAptList(); renderCalendar();
       setTimeout(()=>toggleAptForm(false),1500);
     } else { msg.className='msg-err'; msg.textContent='新增失敗'; }
   } catch(e) { msg.className='msg-err'; msg.textContent='連線錯誤'; }
@@ -637,7 +603,7 @@ async function addAppointment() {
 }
 
 async function deleteAppointment(id) {
-  if(!confirm('確定要取消此筆預約？')) return;
+  if (!confirm('確定要取消此筆預約？')) return;
   try {
     await api('deleteAppointment',{id});
     allAppointments=allAppointments.filter(a=>String(a.id)!==String(id));
@@ -645,7 +611,8 @@ async function deleteAppointment(id) {
   } catch(e) { alert('刪除失敗，請再試一次'); }
 }
 
-loadCustomers();
+// 啟動時載入所有資料
+loadAll();
 </script>
 </body>
 </html>
