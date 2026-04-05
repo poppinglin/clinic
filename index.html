@@ -504,17 +504,35 @@ async function addAppointment() {
   if (!selectedDate) { msg.className='msg-err'; msg.textContent='請先選擇日期'; return; }
   btn.disabled=true; btn.textContent='新增中...';
   try {
-    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note});
+    const phoneNorm=phone.replace(/[-\s]/g,'').replace(/^0+/,'');
+    const existing=customersCache.find(c=>{
+      const p=String(c.phone).replace(/[-\s]/g,'').replace(/^0+/,'');
+      return p===phoneNorm;
+    });
+    let customerId='';
+    if (!existing) {
+      msg.className='msg-ok'; msg.textContent='自動建立顧客資料中...';
+      const cRes=await api('addCustomer',{name,phone,gender:'',age:'',note:''});
+      if (cRes.success) {
+        customerId=cRes.id;
+        customersCache.push({id:cRes.id,name,phone,gender:'',age:'',note:''});
+      }
+    } else {
+      customerId=existing.id;
+    }
+    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId});
     if(res.success) {
-      allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note});
-      msg.className='msg-ok'; msg.textContent='✓ 預約新增成功';
+      allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note,customerId});
+      const isNew=!existing;
+      msg.className='msg-ok';
+      msg.textContent='✓ 預約新增成功'+(isNew?' （已自動建立顧客資料）':'');
       document.getElementById('apt-name').value='';
       document.getElementById('apt-phone').value='';
       document.getElementById('apt-time').value='';
       document.getElementById('apt-note').value='';
       renderAptList();
       renderCalendar();
-      setTimeout(()=>toggleAptForm(false),1000);
+      setTimeout(()=>toggleAptForm(false),1500);
     } else { msg.className='msg-err'; msg.textContent='新增失敗'; }
   } catch(e) { msg.className='msg-err'; msg.textContent='連線錯誤'; }
   btn.disabled=false; btn.textContent='確認新增';
