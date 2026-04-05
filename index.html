@@ -211,7 +211,30 @@
             <div class="form-group"><label>顧客姓名</label><input type="text" id="apt-name" placeholder="姓名（選填）" /></div>
             <div class="form-group"><label>電話 *</label><input type="text" id="apt-phone" placeholder="0912345678" /></div>
           </div>
-          <div class="form-group" style="margin-bottom:10px;"><label>預約時間 *（例如 10:30）</label><input type="text" id="apt-time" placeholder="09:00" /></div>
+          <div class="form-group" style="margin-bottom:10px;">
+            <label>預約時間 *</label>
+            <select id="apt-time-select" onchange="handleTimeSelect()">
+              <option value="">— 選擇時間 —</option>
+              <option value="08:40">08:40</option>
+              <option value="09:20">09:20</option>
+              <option value="10:00">10:00</option>
+              <option value="10:40">10:40</option>
+              <option value="11:20">11:20</option>
+              <option value="14:30">14:30</option>
+              <option value="15:10">15:10</option>
+              <option value="15:50">15:50</option>
+              <option value="16:30">16:30</option>
+              <option value="17:10">17:10</option>
+              <option value="17:50">17:50</option>
+              <option value="18:30">18:30</option>
+              <option value="19:10">19:10</option>
+              <option value="19:50">19:50</option>
+              <option value="20:30">20:30</option>
+              <option value="other">其他時間（自行輸入）</option>
+            </select>
+            <input type="text" id="apt-time-custom" placeholder="請輸入時間，例如 13:15" style="margin-top:6px;display:none;" />
+            <input type="hidden" id="apt-time" />
+          </div>
           <div class="form-group" style="margin-bottom:12px;"><label>備註</label><input type="text" id="apt-note" placeholder="備註（選填）" /></div>
           <button class="btn btn-primary" id="btn-add-apt" onclick="addAppointment()">確認新增</button>
           <button class="btn" style="margin-left:8px;" onclick="toggleAptForm(false)">取消</button>
@@ -486,10 +509,29 @@ function renderAptList() {
     </div>`).join('');
 }
 
+function handleTimeSelect() {
+  const sel = document.getElementById('apt-time-select').value;
+  const custom = document.getElementById('apt-time-custom');
+  const hidden = document.getElementById('apt-time');
+  if (sel === 'other') {
+    custom.style.display = 'block';
+    custom.oninput = () => { hidden.value = custom.value.trim(); };
+    hidden.value = '';
+  } else {
+    custom.style.display = 'none';
+    hidden.value = sel;
+  }
+}
+
 function toggleAptForm(show) {
   document.getElementById('add-apt-form').style.display=show?'block':'none';
   document.getElementById('btn-show-apt-form').style.display=show?'none':'inline-block';
-  if(!show){ document.getElementById('add-apt-msg').textContent=''; }
+  if(!show){
+    document.getElementById('add-apt-msg').textContent='';
+    document.getElementById('apt-time-select').value='';
+    document.getElementById('apt-time-custom').style.display='none';
+    document.getElementById('apt-time').value='';
+  }
 }
 
 async function addAppointment() {
