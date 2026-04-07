@@ -146,6 +146,7 @@
       <div class="form-grid">
         <div class="form-group"><label>顧客電話 *</label><input type="text" id="visit-phone" placeholder="輸入電話查找顧客" oninput="lookupVisitCustomer()" /></div>
         <div class="form-group"><label>就診日期 *</label><input type="date" id="visit-date" /></div>
+        <div class="form-group"><label>就診時間（選填）</label><input type="text" id="visit-time" placeholder="例如 10:40" /></div>
       </div>
       <div id="visit-customer-info" style="margin-bottom:10px;"></div>
       <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（多個症狀用逗號分隔）*</label><textarea id="visit-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛"></textarea></div>
@@ -235,7 +236,7 @@
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbzEFMrs4By2Aphh8w3cmz59417PYM67yKGiaHwQzQg4_rDEJOY1uP1YkFSuzU1k0nY0/exec';
+const API = 'https://script.google.com/macros/s/AKfycbxVo7HrHQququ0SjBNMgsBUaVe3qJCROlKGZR7GtkFd-9qFm9opflhTfVszSwh3pnIp/exec';
 let customersCache = [];
 let visitsCache = [];
 let allAppointments = [];
@@ -314,7 +315,7 @@ function renderCustomerCard(customer) {
       const syms=Array.isArray(v.symptoms)?v.symptoms:(v.symptoms?String(v.symptoms).split(','):[]);
       h+='<div class="visit-card">';
       h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-      h+='<span style="font-size:13px;font-weight:500;">'+v.date+'</span>';
+      h+='<span style="font-size:13px;font-weight:500;">'+v.date+(v.time?' '+v.time:'')+'</span>';
       h+='<div style="display:flex;align-items:center;gap:6px;">'+improveBadge(v.improvement);
       h+='<button class="btn btn-danger btn-sm" onclick="deleteVisit(\''+v.id+'\')">刪除</button></div></div>';
       h+='<div class="visit-row"><span class="visit-label">症狀</span><span class="visit-value">'+syms.map(s=>'<span class="symptom-tag">'+s+'</span>').join('')+'</span></div>';
@@ -395,13 +396,16 @@ async function addVisit() {
   const symptoms=symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
   btn.disabled=true; btn.textContent='儲存中...';
   try {
-    const res=await api('addVisit',{customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note});
+    const visitTime=document.getElementById('visit-time').value.trim();
+    const res=await api('addVisit',{customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note,time:visitTime});
     if (res.success) {
-      visitsCache.push({id:res.id,customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note});
+      const visitTime=document.getElementById('visit-time').value.trim();
+        visitsCache.push({id:res.id,customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note,time:visitTime});
       msg.className='msg-ok'; msg.textContent='✓ 記錄已儲存';
       document.getElementById('visit-symptoms').value='';
       document.getElementById('visit-treatment').value='';
       document.getElementById('visit-note').value='';
+      document.getElementById('visit-time').value='';
       document.getElementById('visit-phone').value='';
       document.getElementById('visit-customer-info').innerHTML='';
       selectedImprovement=''; selectImprove('');
@@ -579,8 +583,9 @@ async function addAppointment() {
       const treatment=document.getElementById('apt-treatment').value.trim();
       if (symptomsRaw && customerId) {
         const symptoms=symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
-        const vRes=await api('addVisit',{customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:''});
-        if (vRes.success) visitsCache.push({id:vRes.id,customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:''});
+        const aptVisitTime=document.getElementById('apt-time').value||'';
+        const vRes=await api('addVisit',{customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:'',time:aptVisitTime});
+        if (vRes.success) visitsCache.push({id:vRes.id,customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:'',time:aptVisitTime});
       }
       const isNew=!findCustomer(phone)||customerId!==existing.id;
       msg.className='msg-ok'; msg.textContent='✓ 預約新增成功'+(isNew?' （已自動建立顧客資料）':'');
