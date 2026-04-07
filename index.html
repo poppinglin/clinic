@@ -119,7 +119,7 @@
 
   <div id="tab-search" class="tab-content active">
     <div class="search-bar">
-      <input type="text" id="search-input" placeholder="輸入顧客電話號碼..." />
+      <input type="text" id="search-input" placeholder="輸入顧客電話號碼..." onkeydown="if(event.key==='Enter')searchCustomer()" />
       <button class="btn btn-primary" onclick="searchCustomer()">查詢</button>
     </div>
     <div id="search-result"><div class="empty">輸入電話號碼查詢顧客資料</div></div>
