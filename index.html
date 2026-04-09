@@ -499,16 +499,29 @@ function renderAptList() {
   const el=document.getElementById('apt-list');
   const dayApts=allAppointments.filter(a=>String(a.date)===selectedDate).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
   if (dayApts.length===0) { el.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0;">當天尚無預約</div>'; return; }
-  el.innerHTML=dayApts.map(a=>`
-    <div class="apt-card">
-      <div class="apt-time">${a.time}</div>
-      <div class="apt-info">
-        <div class="apt-name">${a.customerName||'（未填姓名）'}${a.gender?' · '+a.gender:''}${a.count&&a.count>1?' · '+a.count+'人':''}</div>
-        <div class="apt-phone">${a.phone||''}</div>
-        ${a.note?'<div class="apt-note">'+a.note+'</div>':''}
+  el.innerHTML=dayApts.map(a=>{
+    // 找對應的就診記錄（同顧客同日期）
+    const visit = visitsCache.filter(v=>String(v.customerId)===String(a.customerId) && String(v.date)===String(a.date))
+      .sort((x,y)=>String(y.createdAt||'').localeCompare(String(x.createdAt||'')))[0];
+    const symptoms = visit ? (Array.isArray(visit.symptoms)?visit.symptoms:(visit.symptoms?String(visit.symptoms).split(','):[])).filter(Boolean) : [];
+    const treatment = visit ? visit.treatment : '';
+    return `
+    <div class="apt-card" style="flex-direction:column;align-items:flex-start;">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:${symptoms.length||treatment?'8px':'0'};">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="apt-time">${a.time}</div>
+          <div class="apt-info">
+            <div class="apt-name">${a.customerName||'（未填姓名）'}${a.gender?' · '+a.gender:''}${a.count&&a.count>1?' · '+a.count+'人':''}</div>
+            <div class="apt-phone">${a.phone||''}</div>
+            ${a.note?'<div class="apt-note">'+a.note+'</div>':''}
+          </div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="deleteAppointment('${a.id}')">取消預約</button>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="deleteAppointment('${a.id}')">取消預約</button>
-    </div>`).join('');
+      ${symptoms.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"><span style="font-size:12px;color:var(--text2);min-width:36px;padding-top:2px;">症狀</span>'+symptoms.map(s=>'<span class="symptom-tag">'+s+'</span>').join('')+'</div>':''}
+      ${treatment?'<div style="display:flex;gap:6px;margin-top:4px;"><span style="font-size:12px;color:var(--text2);min-width:36px;">處理</span><span style="font-size:13px;">'+treatment+'</span></div>':''}
+    </div>`;
+  }).join('');
 }
 
 function handleTimeSelect() {
