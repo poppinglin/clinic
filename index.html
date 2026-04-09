@@ -101,6 +101,18 @@
   .apt-note { font-size: 12px; color: var(--text2); margin-top: 2px; }
   .add-apt-form { background: var(--bg2); border-radius: var(--radius-sm); padding: 14px; margin-top: 12px; border: 0.5px solid var(--border); }
   .add-apt-title { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .view-toggle { display:flex; gap:6px; margin-bottom:14px; }
+  .view-btn { padding:5px 14px; border-radius:20px; font-size:12px; cursor:pointer; border:0.5px solid var(--border2); color:var(--text2); background:transparent; transition:all 0.12s; font-family:inherit; }
+  .view-btn.active { background:var(--text); color:var(--bg); border-color:var(--text); }
+  .week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:14px; }
+  .week-col { min-width:0; }
+  .week-col-header { text-align:center; font-size:12px; color:var(--text2); padding:4px 2px; font-weight:500; }
+  .week-col-date { text-align:center; font-size:13px; padding:6px 2px; border-radius:var(--radius-sm); cursor:pointer; margin-bottom:4px; border:0.5px solid transparent; }
+  .week-col-date:hover { background:var(--bg2); }
+  .week-col-date.today { border-color:var(--border2); font-weight:500; }
+  .week-col-date.selected { background:var(--text); color:var(--bg); }
+  .week-apt-item { background:var(--info-bg); color:var(--info-text); border-radius:var(--radius-sm); padding:3px 6px; font-size:11px; margin-bottom:3px; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .week-apt-item:hover { opacity:0.8; }
   .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 100; display:flex; align-items:center; justify-content:center; padding:16px; }
   .modal-box { background: var(--bg); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 0.5px solid var(--border); }
   .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 16px; }
@@ -175,18 +187,31 @@
 
   <div id="tab-appointment" class="tab-content">
     <div class="card">
-      <div class="cal-header">
-        <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
-        <h2 id="cal-title"></h2>
-        <button class="cal-nav" onclick="changeMonth(1)">›</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="view-toggle">
+          <button class="view-btn active" id="btn-month-view" onclick="switchCalView('month')">月</button>
+          <button class="view-btn" id="btn-week-view" onclick="switchCalView('week')">週</button>
+        </div>
+        <div class="cal-header" style="margin-bottom:0;flex:1;justify-content:center;gap:16px;">
+          <button class="cal-nav" id="cal-prev" onclick="calPrev()">‹</button>
+          <h2 id="cal-title" style="min-width:120px;text-align:center;"></h2>
+          <button class="cal-nav" id="cal-next" onclick="calNext()">›</button>
+        </div>
       </div>
-      <div class="cal-grid">
-        <div class="cal-day-label">一</div><div class="cal-day-label">二</div>
-        <div class="cal-day-label">三</div><div class="cal-day-label">四</div>
-        <div class="cal-day-label">五</div><div class="cal-day-label">六</div>
-        <div class="cal-day-label">日</div>
+      <!-- 月視圖 -->
+      <div id="month-view-wrap">
+        <div class="cal-grid">
+          <div class="cal-day-label">一</div><div class="cal-day-label">二</div>
+          <div class="cal-day-label">三</div><div class="cal-day-label">四</div>
+          <div class="cal-day-label">五</div><div class="cal-day-label">六</div>
+          <div class="cal-day-label">日</div>
+        </div>
+        <div class="cal-grid" id="cal-body"></div>
       </div>
-      <div class="cal-grid" id="cal-body"></div>
+      <!-- 週視圖 -->
+      <div id="week-view-wrap" style="display:none;">
+        <div class="week-grid" id="week-body"></div>
+      </div>
       <div class="divider"></div>
       <div>
         <div style="font-size:13px;font-weight:500;margin-bottom:10px;" id="apt-date-title">請選擇日期</div>
@@ -294,7 +319,7 @@ let visitsCache = [];
 let allAppointments = [];
 let selectedImprovement = '';
 let selectedAptImprovement = '';
-let calYear, calMonth, selectedDate = '';
+let calYear, calMonth, selectedDate = '', calView = 'month', weekStart = null;
 let dataLoaded = false;
 
 async function api(action, body={}) {
@@ -502,9 +527,74 @@ function renderAllCustomers() {
 async function initCalendar() {
   const now=new Date();
   if (!calYear) { calYear=now.getFullYear(); calMonth=now.getMonth(); }
+  if (!weekStart) weekStart = getWeekStart(now);
   if (!dataLoaded) await loadAll();
-  renderCalendar();
+  if (calView==='month') renderCalendar();
+  else renderWeekView();
   selectCalDay(now.toISOString().split('T')[0]);
+}
+
+function switchCalView(view) {
+  calView = view;
+  document.getElementById('btn-month-view').className='view-btn'+(view==='month'?' active':'');
+  document.getElementById('btn-week-view').className='view-btn'+(view==='week'?' active':'');
+  document.getElementById('month-view-wrap').style.display=view==='month'?'block':'none';
+  document.getElementById('week-view-wrap').style.display=view==='week'?'block':'none';
+  if (view==='month') renderCalendar();
+  else renderWeekView();
+}
+
+function calPrev() {
+  if (calView==='month') changeMonth(-1);
+  else { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()-7); renderWeekView(); }
+}
+
+function calNext() {
+  if (calView==='month') changeMonth(1);
+  else { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+7); renderWeekView(); }
+}
+
+function getWeekStart(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day===0?-6:1-day;
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function toDateStr(date) {
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+
+function renderWeekView() {
+  if (!weekStart) weekStart=getWeekStart(new Date());
+  const days=['一','二','三','四','五','六','日'];
+  const today=toDateStr(new Date());
+  const months=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const endDate=new Date(weekStart); endDate.setDate(endDate.getDate()+6);
+  const startM=weekStart.getMonth(); const endM=endDate.getMonth();
+  const titleStr=startM===endM
+    ? weekStart.getFullYear()+'年 '+months[startM]
+    : weekStart.getFullYear()+'年 '+months[startM]+' — '+months[endM];
+  document.getElementById('cal-title').textContent=titleStr;
+  let html='';
+  for(let i=0;i<7;i++){
+    const d=new Date(weekStart); d.setDate(d.getDate()+i);
+    const ds=toDateStr(d);
+    const dayApts=allAppointments.filter(a=>String(a.date)===ds).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+    let dateCls='week-col-date';
+    if(ds===today) dateCls+=' today';
+    if(ds===selectedDate) dateCls+=' selected';
+    html+='<div class="week-col">';
+    html+='<div class="week-col-header">'+days[i]+'</div>';
+    html+='<div class="'+dateCls+'" onclick="selectCalDay(''+ds+'')">'+d.getDate()+'</div>';
+    dayApts.forEach(a=>{
+      html+='<div class="week-apt-item" onclick="selectCalDay(''+ds+'')" title="'+a.time+' '+( a.customerName||'')+'">'+a.time+' '+(a.customerName||'未填姓名')+'</div>';
+    });
+    html+='</div>';
+  }
+  document.getElementById('week-body').innerHTML=html;
 }
 
 function renderCalendar() {
@@ -542,7 +632,8 @@ function changeMonth(dir) {
 
 function selectCalDay(ds) {
   selectedDate=ds;
-  renderCalendar();
+  if(calView==='month') renderCalendar();
+  else renderWeekView();
   const p=ds.split('-');
   document.getElementById('apt-date-title').textContent=p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日 的預約';
   document.getElementById('btn-show-apt-form').style.display='inline-block';
@@ -693,7 +784,7 @@ async function addAppointment() {
       document.getElementById('apt-symptoms').value='';
       document.getElementById('apt-treatment').value='';
       selectedAptImprovement=''; selectAptImprove('');
-      renderAptList(); renderCalendar();
+      renderAptList(); if(calView==='month') renderCalendar(); else renderWeekView();
       setTimeout(()=>toggleAptForm(false),1500);
     } else { msg.className='msg-err'; msg.textContent='新增失敗'; }
   } catch(e) { msg.className='msg-err'; msg.textContent='連線錯誤'; }
@@ -705,7 +796,7 @@ async function deleteAppointment(id) {
   try {
     await api('deleteAppointment',{id});
     allAppointments=allAppointments.filter(a=>String(a.id)!==String(id));
-    renderAptList(); renderCalendar();
+    renderAptList(); if(calView==='month') renderCalendar(); else renderWeekView();
   } catch(e) { alert('刪除失敗，請再試一次'); }
 }
 
