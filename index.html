@@ -588,9 +588,9 @@ function renderWeekView() {
     if(ds===selectedDate) dateCls+=' selected';
     html+='<div class="week-col">';
     html+='<div class="week-col-header">'+days[i]+'</div>';
-    html+='<div class="'+dateCls+'" onclick="selectCalDay(''+ds+'')">'+d.getDate()+'</div>';
-    dayApts.forEach(a=>{
-      html+='<div class="week-apt-item" onclick="selectCalDay(''+ds+'')" title="'+a.time+' '+( a.customerName||'')+'">'+a.time+' '+(a.customerName||'未填姓名')+'</div>';
+    html+='<div class="'+dateCls+'" onclick="selectCalDay(this.dataset.ds)" data-ds="'+ds+'">'+d.getDate()+'</div>';
+    dayApts.forEach(function(a){
+      html+='<div class="week-apt-item" onclick="selectCalDay(this.dataset.ds)" data-ds="'+ds+'" title="'+a.time+' '+(a.customerName||'')+'">'+a.time+' '+(a.customerName||'未填姓名')+'</div>';
     });
     html+='</div>';
   }
