@@ -582,13 +582,31 @@ function handleTimeSelect() {
   const sel=document.getElementById('apt-time-select').value;
   const custom=document.getElementById('apt-time-custom');
   const hidden=document.getElementById('apt-time');
+  const msg=document.getElementById('add-apt-msg');
   if (sel==='other') {
     custom.style.display='block';
     custom.oninput=()=>{ hidden.value=custom.value.trim(); };
     hidden.value='';
-  } else {
+    msg.textContent='';
+  } else if (sel) {
     custom.style.display='none';
     hidden.value=sel;
+    // 即時提示已滿
+    const MAX_PER_SLOT = 2;
+    const sameSlot = allAppointments.filter(a=>String(a.date)===selectedDate && String(a.time)===sel);
+    if (sameSlot.length >= MAX_PER_SLOT) {
+      msg.className='msg-err';
+      msg.textContent='此時段已額滿（'+sameSlot.length+'/'+MAX_PER_SLOT+'）';
+    } else if (sameSlot.length > 0) {
+      msg.className='msg-ok';
+      msg.textContent='此時段已有 '+sameSlot.length+' 人（還可預約 '+(MAX_PER_SLOT-sameSlot.length)+' 人）';
+    } else {
+      msg.textContent='';
+    }
+  } else {
+    custom.style.display='none';
+    hidden.value='';
+    msg.textContent='';
   }
 }
 
@@ -627,6 +645,14 @@ async function addAppointment() {
   if (!phone) { msg.className='msg-err'; msg.textContent='電話為必填'; return; }
   if (!time) { msg.className='msg-err'; msg.textContent='請選擇或填寫預約時間'; return; }
   if (!selectedDate) { msg.className='msg-err'; msg.textContent='請先選擇日期'; return; }
+  // 時段衝突檢查：同日同時段最多 2 人
+  const MAX_PER_SLOT = 2;
+  const sameSlot = allAppointments.filter(a => String(a.date)===selectedDate && String(a.time)===String(time));
+  if (sameSlot.length >= MAX_PER_SLOT) {
+    msg.className='msg-err';
+    msg.textContent='此時段已額滿（最多 '+MAX_PER_SLOT+' 人），請選擇其他時間';
+    return;
+  }
   btn.disabled=true; btn.textContent='新增中...';
   try {
     // 自動建立新顧客
