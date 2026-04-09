@@ -101,6 +101,10 @@
   .apt-note { font-size: 12px; color: var(--text2); margin-top: 2px; }
   .add-apt-form { background: var(--bg2); border-radius: var(--radius-sm); padding: 14px; margin-top: 12px; border: 0.5px solid var(--border); }
   .add-apt-title { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 100; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .modal-box { background: var(--bg); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 0.5px solid var(--border); }
+  .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 16px; }
+  .modal-footer { display:flex; gap:8px; margin-top:16px; }
 </style>
 </head>
 <body>
@@ -235,8 +239,56 @@
   </div>
 </div>
 
+<!-- 編輯顧客 Modal -->
+<div class="modal-overlay" id="modal-customer" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">編輯顧客資料</div>
+    <input type="hidden" id="edit-customer-id" />
+    <div class="form-grid">
+      <div class="form-group"><label>姓名</label><input type="text" id="edit-customer-name" placeholder="顧客姓名（選填）" /></div>
+      <div class="form-group"><label>電話 *</label><input type="text" id="edit-customer-phone" /></div>
+      <div class="form-group"><label>性別</label><select id="edit-customer-gender"><option value="">不填</option><option value="男">男</option><option value="女">女</option></select></div>
+      <div class="form-group"><label>年齡</label><input type="number" id="edit-customer-age" min="1" max="120" /></div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px;"><label>備註</label><textarea id="edit-customer-note"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveCustomer()">儲存</button>
+      <button class="btn" onclick="closeModal('modal-customer')">取消</button>
+      <span id="edit-customer-msg" style="font-size:13px;align-self:center;margin-left:4px;"></span>
+    </div>
+  </div>
+</div>
+
+<!-- 編輯就診記錄 Modal -->
+<div class="modal-overlay" id="modal-visit" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-title">編輯就診記錄</div>
+    <input type="hidden" id="edit-visit-id" />
+    <div class="form-grid">
+      <div class="form-group"><label>就診日期</label><input type="date" id="edit-visit-date" /></div>
+      <div class="form-group"><label>就診時間</label><input type="text" id="edit-visit-time" placeholder="例如 10:40" /></div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（逗號分隔）</label><textarea id="edit-visit-symptoms"></textarea></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>處理方式</label><textarea id="edit-visit-treatment"></textarea></div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>改善程度</label>
+      <div class="improve-select">
+        <button class="improve-opt" id="edit-opt-improve" onclick="selectEditImprove('明顯改善')">明顯改善</button>
+        <button class="improve-opt" id="edit-opt-partial" onclick="selectEditImprove('部分改善')">部分改善</button>
+        <button class="improve-opt" id="edit-opt-none" onclick="selectEditImprove('未明顯改善')">未明顯改善</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px;"><label>備註</label><input type="text" id="edit-visit-note" /></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="saveVisit()">儲存</button>
+      <button class="btn" onclick="closeModal('modal-visit')">取消</button>
+      <span id="edit-visit-msg" style="font-size:13px;align-self:center;margin-left:4px;"></span>
+    </div>
+  </div>
+</div>
+
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbwlvQLhwrn7D3PXCmUTmHb4aKJx5TMzaJ4OAcMV8UYQsw57cg45Yv7bVAULNm5Oxb3T/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwgYMuhoTO-DvmnMBkU0VNiNglWG8DJlbujLg6ODSqV7cnsk9W9rS0HTsHsVbGSklS8/exec';
 let customersCache = [];
 let visitsCache = [];
 let allAppointments = [];
@@ -304,6 +356,7 @@ function renderCustomerCard(customer) {
   if (customer.gender||customer.age) h+=(customer.name?' · ':'')+(customer.gender||'')+(customer.age?' '+customer.age+'歲':'');
   h+='</div></div>';
   h+='<div style="display:flex;align-items:center;gap:8px;"><span class="visit-count">共 '+visits.length+' 次</span>';
+  h+='<button class="btn btn-sm" onclick="openEditCustomer(\''+customer.id+'\')">編輯</button>';
   h+='<button class="btn btn-danger btn-sm" onclick="deleteCustomer(\''+customer.id+'\')">刪除顧客</button></div></div>';
   if (customer.note) h+='<div style="font-size:12px;color:var(--text2);margin-bottom:10px;">備註：'+customer.note+'</div>';
   h+='<div class="divider"></div>';
@@ -317,6 +370,7 @@ function renderCustomerCard(customer) {
       h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
       h+='<span style="font-size:13px;font-weight:500;">'+v.date+(v.time?' '+v.time:'')+'</span>';
       h+='<div style="display:flex;align-items:center;gap:6px;">'+improveBadge(v.improvement);
+      h+='<button class="btn btn-sm" onclick="openEditVisit(\''+v.id+'\')">編輯</button>';
       h+='<button class="btn btn-danger btn-sm" onclick="deleteVisit(\''+v.id+'\')">刪除</button></div></div>';
       h+='<div class="visit-row"><span class="visit-label">症狀</span><span class="visit-value">'+syms.map(s=>'<span class="symptom-tag">'+s+'</span>').join('')+'</span></div>';
       if (v.treatment) h+='<div class="visit-row"><span class="visit-label">處理</span><span class="visit-value">'+v.treatment+'</span></div>';
@@ -627,6 +681,102 @@ async function deleteAppointment(id) {
     allAppointments=allAppointments.filter(a=>String(a.id)!==String(id));
     renderAptList(); renderCalendar();
   } catch(e) { alert('刪除失敗，請再試一次'); }
+}
+
+// ===== 編輯功能 =====
+let editImprovement = '';
+
+function closeModal(id) {
+  document.getElementById(id).style.display='none';
+}
+
+function openEditCustomer(customerId) {
+  const c = customersCache.find(c=>String(c.id)===String(customerId));
+  if (!c) return;
+  document.getElementById('edit-customer-id').value = c.id;
+  document.getElementById('edit-customer-name').value = c.name||'';
+  document.getElementById('edit-customer-phone').value = c.phone||'';
+  document.getElementById('edit-customer-gender').value = c.gender||'';
+  document.getElementById('edit-customer-age').value = c.age||'';
+  document.getElementById('edit-customer-note').value = c.note||'';
+  document.getElementById('edit-customer-msg').textContent='';
+  document.getElementById('modal-customer').style.display='flex';
+}
+
+async function saveCustomer() {
+  const id = document.getElementById('edit-customer-id').value;
+  const name = document.getElementById('edit-customer-name').value.trim();
+  const phone = document.getElementById('edit-customer-phone').value.trim();
+  const gender = document.getElementById('edit-customer-gender').value;
+  const age = document.getElementById('edit-customer-age').value;
+  const note = document.getElementById('edit-customer-note').value.trim();
+  const msg = document.getElementById('edit-customer-msg');
+  if (!phone) { msg.style.color='#a32d2d'; msg.textContent='電話為必填'; return; }
+  msg.style.color='var(--text2)'; msg.textContent='儲存中...';
+  try {
+    const res = await api('updateCustomer', {id, name, phone, gender, age, note});
+    if (res.success) {
+      const idx = customersCache.findIndex(c=>String(c.id)===String(id));
+      if (idx>=0) customersCache[idx] = {...customersCache[idx], name, phone, gender, age, note};
+      msg.style.color='#3b6d11'; msg.textContent='✓ 儲存成功';
+      setTimeout(()=>{
+        closeModal('modal-customer');
+        const q = document.getElementById('search-input').value.trim();
+        if (q) searchCustomer();
+        if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
+      }, 800);
+    } else { msg.style.color='#a32d2d'; msg.textContent='儲存失敗'; }
+  } catch(e) { msg.style.color='#a32d2d'; msg.textContent='連線錯誤'; }
+}
+
+function openEditVisit(visitId) {
+  const v = visitsCache.find(v=>String(v.id)===String(visitId));
+  if (!v) return;
+  document.getElementById('edit-visit-id').value = v.id;
+  document.getElementById('edit-visit-date').value = v.date||'';
+  document.getElementById('edit-visit-time').value = v.time||'';
+  const syms = Array.isArray(v.symptoms)?v.symptoms:(v.symptoms?String(v.symptoms).split(','):[]);
+  document.getElementById('edit-visit-symptoms').value = syms.join('、');
+  document.getElementById('edit-visit-treatment').value = v.treatment||'';
+  document.getElementById('edit-visit-note').value = v.note||'';
+  editImprovement = v.improvement||'';
+  selectEditImprove(editImprovement);
+  document.getElementById('edit-visit-msg').textContent='';
+  document.getElementById('modal-visit').style.display='flex';
+}
+
+function selectEditImprove(val) {
+  editImprovement = val;
+  document.getElementById('edit-opt-improve').className='improve-opt'+(val==='明顯改善'?' sel-improve':'');
+  document.getElementById('edit-opt-partial').className='improve-opt'+(val==='部分改善'?' sel-partial':'');
+  document.getElementById('edit-opt-none').className='improve-opt'+(val==='未明顯改善'?' sel-none':'');
+}
+
+async function saveVisit() {
+  const id = document.getElementById('edit-visit-id').value;
+  const date = document.getElementById('edit-visit-date').value;
+  const time = document.getElementById('edit-visit-time').value.trim();
+  const symptomsRaw = document.getElementById('edit-visit-symptoms').value.trim();
+  const treatment = document.getElementById('edit-visit-treatment').value.trim();
+  const note = document.getElementById('edit-visit-note').value.trim();
+  const msg = document.getElementById('edit-visit-msg');
+  if (!date) { msg.style.color='#a32d2d'; msg.textContent='請填寫日期'; return; }
+  const symptoms = symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
+  msg.style.color='var(--text2)'; msg.textContent='儲存中...';
+  try {
+    const res = await api('updateVisit', {id, date, time, symptoms, treatment, improvement: editImprovement||'未填寫', note});
+    if (res.success) {
+      const idx = visitsCache.findIndex(v=>String(v.id)===String(id));
+      if (idx>=0) visitsCache[idx] = {...visitsCache[idx], date, time, symptoms, treatment, improvement: editImprovement||'未填寫', note};
+      msg.style.color='#3b6d11'; msg.textContent='✓ 儲存成功';
+      setTimeout(()=>{
+        closeModal('modal-visit');
+        const q = document.getElementById('search-input').value.trim();
+        if (q) searchCustomer();
+        if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
+      }, 800);
+    } else { msg.style.color='#a32d2d'; msg.textContent='儲存失敗'; }
+  } catch(e) { msg.style.color='#a32d2d'; msg.textContent='連線錯誤'; }
 }
 
 // 啟動時載入所有資料
