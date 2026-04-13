@@ -759,7 +759,10 @@ async function addAppointment() {
       }
     } else { customerId=existing.id; }
 
-    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1});
+    const aptSymptomsRaw=document.getElementById('apt-symptoms').value.trim();
+    const aptTreatment=document.getElementById('apt-treatment').value.trim();
+    const aptSymptoms=aptSymptomsRaw?aptSymptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean):[];
+    const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1,symptoms:aptSymptoms.join(','),treatment:aptTreatment});
     if (res.success) {
       allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1});
       // 若有填就診記錄則一併儲存
