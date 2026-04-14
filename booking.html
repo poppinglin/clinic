@@ -236,14 +236,51 @@ function getTimeSlots(dateStr) {
 }
 
 let calYear, calMonth, selectedDate = '', selectedTime = '', allAppointments = [];
+let dataReady = false;
+
+const CACHE_KEY = 'clinic_apts';
+const CACHE_TTL = 5 * 60 * 1000; // 5 分鐘
+
+function saveCache(apts) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: apts })); } catch(e) {}
+}
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (Date.now() - obj.ts > CACHE_TTL) return null;
+    return obj.data;
+  } catch(e) { return null; }
+}
 
 async function loadAppointments() {
+  // 先嘗試快取，立即顯示畫面
+  const cached = loadCache();
+  if (cached) {
+    allAppointments = cached;
+    dataReady = true;
+    document.getElementById('init-loading').style.display = 'none';
+    initCalendar();
+  } else {
+    // 沒有快取：先顯示日曆骨架，背景載入資料
+    document.getElementById('init-loading').style.display = 'none';
+    initCalendar();
+  }
+
+  // 背景向 API 拿最新資料
   try {
     const res = await fetch(API + '?action=getAll', { method: 'POST', body: JSON.stringify({}) });
-    const data = await res.json();
-    allAppointments = data.appointments || [];
-  } catch(e) { allAppointments = []; }
-  document.getElementById('init-loading').style.display = 'none';
+    const json = await res.json();
+    allAppointments = json.appointments || [];
+    saveCache(allAppointments);
+    dataReady = true;
+    // 更新日曆與時段（資料回來後刷新）
+    renderCalendar();
+    if (selectedDate) renderSlots();
+  } catch(e) {
+    dataReady = true;
+  }
 }
 
 function toDateStr(date) {
@@ -358,6 +395,7 @@ async function submitBooking() {
     const data = await res.json();
     if (data.success) {
       allAppointments.push({ id: data.id, customerName: name, phone, date: selectedDate, time: selectedTime });
+      saveCache(allAppointments);
       document.getElementById('s-name').textContent = name;
       document.getElementById('s-phone').textContent = phone;
       const p = selectedDate.split('-');
@@ -387,7 +425,7 @@ function resetBooking() {
   window.scrollTo(0, 0);
 }
 
-loadAppointments().then(() => initCalendar());
+loadAppointments();
 
 // ── 頁籤切換 ──────────────────────────────
 function switchPage(page) {
@@ -460,6 +498,7 @@ async function confirmCancel(id, dateStr, time, phone) {
     const data = await res.json();
     if (data.success) {
       allAppointments = allAppointments.filter(a => String(a.id) !== String(id));
+      saveCache(allAppointments);
       document.getElementById('cancel-success-detail').innerHTML =
         `<div class="success-row"><span class="success-label">電話</span><span>${phone}</span></div>
          <div class="success-row"><span class="success-label">日期</span><span>${dateStr}</span></div>
