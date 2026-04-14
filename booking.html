@@ -407,6 +407,8 @@ function switchPage(page) {
 }
 
 // ── 取消預約 ──────────────────────────────
+function normPhone(p) { return String(p).replace(/[-\s]/g,'').replace(/^0+/,''); }
+
 function searchBookings() {
   const phone = document.getElementById('cancel-phone').value.trim();
   const msg = document.getElementById('cancel-msg');
@@ -415,7 +417,7 @@ function searchBookings() {
 
   const today = toDateStr(new Date());
   const found = allAppointments.filter(a =>
-    String(a.phone) === phone && String(a.date) >= today
+    normPhone(a.phone) === normPhone(phone) && String(a.date) >= today
   ).sort((a, b) => (a.date + a.time) > (b.date + b.time) ? 1 : -1);
 
   const card = document.getElementById('cancel-result-card');
