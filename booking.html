@@ -374,6 +374,13 @@ function selectTime(time) {
   document.getElementById('form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function saveCustomerInfo(name, phone) {
+  try { localStorage.setItem('clinic_customer', JSON.stringify({ name, phone })); } catch(e) {}
+}
+function loadCustomerInfo() {
+  try { return JSON.parse(localStorage.getItem('clinic_customer') || 'null'); } catch(e) { return null; }
+}
+
 async function submitBooking() {
   const name = document.getElementById('book-name').value.trim();
   const phone = document.getElementById('book-phone').value.trim();
@@ -394,6 +401,7 @@ async function submitBooking() {
     });
     const data = await res.json();
     if (data.success) {
+      saveCustomerInfo(name, phone);
       allAppointments.push({ id: data.id, customerName: name, phone, date: selectedDate, time: selectedTime });
       saveCache(allAppointments);
       document.getElementById('s-name').textContent = name;
@@ -423,6 +431,16 @@ function resetBooking() {
   document.getElementById('success-screen').style.display = 'none';
   renderCalendar();
   window.scrollTo(0, 0);
+}
+
+// 自動填入上次使用的姓名與電話
+const _saved = loadCustomerInfo();
+if (_saved) {
+  if (_saved.name) document.getElementById('book-name').value = _saved.name;
+  if (_saved.phone) {
+    document.getElementById('book-phone').value = _saved.phone;
+    document.getElementById('cancel-phone').value = _saved.phone;
+  }
 }
 
 loadAppointments();
