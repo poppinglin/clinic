@@ -84,6 +84,26 @@
   .init-spinner { width: 36px; height: 36px; border: 3px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .init-loading p { font-size: 14px; color: var(--text2); }
+
+  /* 頁籤切換 */
+  .page-tabs { display: flex; background: var(--bg); border-bottom: 0.5px solid var(--border); }
+  .page-tab { flex: 1; padding: 14px; text-align: center; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .page-tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  /* 取消預約 */
+  .cancel-apt-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+  .cancel-apt-item:last-child { border-bottom: none; }
+  .cancel-apt-info { font-size: 14px; line-height: 1.6; }
+  .cancel-apt-info .apt-datetime { font-weight: 500; color: var(--text); }
+  .cancel-apt-info .apt-phone { font-size: 12px; color: var(--text3); }
+  .btn-cancel-apt { background: transparent; border: 0.5px solid #a32d2d; border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; color: #a32d2d; cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+  .btn-cancel-apt:hover { background: #a32d2d; color: #fff; }
+  .btn-cancel-apt:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cancel-success { text-align: center; padding: 1.5rem 1rem; }
+  .cancel-success-icon { width: 52px; height: 52px; background: #fdecea; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 24px; }
+  .btn-search { background: var(--text); color: var(--bg); border: none; border-radius: var(--radius-sm); padding: 12px 20px; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity 0.15s; }
+  .btn-search:hover { opacity: 0.85; }
+  .search-row { display: flex; gap: 8px; align-items: stretch; }
 </style>
 </head>
 <body>
@@ -97,6 +117,12 @@
 <div class="header">
   <h1>濟興堂推拿整復所</h1>
   <p>線上預約系統</p>
+</div>
+
+<!-- 頁籤 -->
+<div class="page-tabs">
+  <div class="page-tab active" id="tab-book" onclick="switchPage('book')">新增預約</div>
+  <div class="page-tab" id="tab-cancel" onclick="switchPage('cancel')">取消預約</div>
 </div>
 
 <div class="wrap" id="main-screen">
@@ -142,7 +168,39 @@
 
 </div>
 
-<!-- 成功畫面 -->
+<!-- 取消預約頁面 -->
+<div class="wrap" id="cancel-screen" style="display:none;">
+  <div class="card">
+    <div class="card-title">查詢預約</div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label>輸入預約時使用的電話號碼</label>
+      <div class="search-row" style="margin-top:6px;">
+        <input type="tel" id="cancel-phone" placeholder="請輸入電話號碼" style="flex:1;" onkeydown="if(event.key==='Enter')searchBookings()" />
+        <button class="btn-search" onclick="searchBookings()">查詢</button>
+      </div>
+    </div>
+    <div id="cancel-msg" class="msg-err" style="margin-top:8px;"></div>
+  </div>
+  <div class="card" id="cancel-result-card" style="display:none;">
+    <div class="card-title" id="cancel-result-title">查詢結果</div>
+    <div id="cancel-result-list"></div>
+  </div>
+</div>
+
+<!-- 取消成功畫面 -->
+<div class="wrap" id="cancel-success-screen" style="display:none;">
+  <div class="card">
+    <div class="cancel-success">
+      <div class="cancel-success-icon">✓</div>
+      <div class="success-title">預約已取消</div>
+      <p style="font-size:14px;color:var(--text2);margin:8px 0 20px;">您的預約已成功取消</p>
+      <div class="success-detail" id="cancel-success-detail"></div>
+      <button class="btn-again" onclick="backToCancel()" style="margin-top:16px;">返回查詢</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增預約成功畫面 -->
 <div class="wrap" id="success-screen" style="display:none;">
   <div class="card">
     <div class="success-screen">
@@ -157,7 +215,7 @@
         <div class="success-row"><span class="success-label">日期</span><span id="s-date"></span></div>
         <div class="success-row"><span class="success-label">時間</span><span id="s-time"></span></div>
       </div>
-      <p style="font-size:12px;color:var(--text3);">如需取消或更改，請直接來電洽詢</p>
+      <p style="font-size:12px;color:var(--text3);">如需取消，請點上方「取消預約」頁籤</p>
       <button class="btn-again" onclick="resetBooking()">再次預約</button>
     </div>
   </div>
@@ -284,7 +342,6 @@ async function submitBooking() {
   const phone = document.getElementById('book-phone').value.trim();
   const msg = document.getElementById('submit-msg');
   const btn = document.getElementById('btn-submit');
-  if (!name) { msg.className = 'msg-err'; msg.textContent = '請填寫姓名'; return; }
   if (!phone) { msg.className = 'msg-err'; msg.textContent = '請填寫電話'; return; }
   if (!selectedDate || !selectedTime) { msg.className = 'msg-err'; msg.textContent = '請選擇日期和時段'; return; }
   // 再次確認時段沒有額滿
@@ -331,6 +388,99 @@ function resetBooking() {
 }
 
 loadAppointments().then(() => initCalendar());
+
+// ── 頁籤切換 ──────────────────────────────
+function switchPage(page) {
+  const isBook = page === 'book';
+  document.getElementById('tab-book').classList.toggle('active', isBook);
+  document.getElementById('tab-cancel').classList.toggle('active', !isBook);
+
+  document.getElementById('main-screen').style.display = isBook ? 'block' : 'none';
+  document.getElementById('success-screen').style.display = 'none';
+  document.getElementById('cancel-screen').style.display = isBook ? 'none' : 'block';
+  document.getElementById('cancel-success-screen').style.display = 'none';
+
+  if (!isBook) {
+    document.getElementById('cancel-msg').textContent = '';
+    document.getElementById('cancel-result-card').style.display = 'none';
+  }
+}
+
+// ── 取消預約 ──────────────────────────────
+function searchBookings() {
+  const phone = document.getElementById('cancel-phone').value.trim();
+  const msg = document.getElementById('cancel-msg');
+  if (!phone) { msg.textContent = '請輸入電話號碼'; return; }
+  msg.textContent = '';
+
+  const today = toDateStr(new Date());
+  const found = allAppointments.filter(a =>
+    String(a.phone) === phone && String(a.date) >= today
+  ).sort((a, b) => (a.date + a.time) > (b.date + b.time) ? 1 : -1);
+
+  const card = document.getElementById('cancel-result-card');
+  const list = document.getElementById('cancel-result-list');
+  const title = document.getElementById('cancel-result-title');
+  card.style.display = 'block';
+
+  if (found.length === 0) {
+    title.textContent = '查詢結果';
+    list.innerHTML = '<div class="empty-slots">查無此電話的預約記錄<br><span style="font-size:12px;">只顯示今日起的未來預約</span></div>';
+    return;
+  }
+
+  title.textContent = '共找到 ' + found.length + ' 筆預約';
+  list.innerHTML = found.map(a => {
+    const p = String(a.date).split('-');
+    const dateStr = p[0] + '年' + parseInt(p[1]) + '月' + parseInt(p[2]) + '日';
+    const nameStr = a.customerName ? '　' + a.customerName : '';
+    return `<div class="cancel-apt-item">
+      <div class="cancel-apt-info">
+        <div class="apt-datetime">${dateStr}　${a.time}</div>
+        <div class="apt-phone">${a.phone}${nameStr}</div>
+      </div>
+      <button class="btn-cancel-apt" id="cancel-btn-${a.id}" onclick="confirmCancel('${a.id}','${dateStr}','${a.time}','${a.phone}')">取消預約</button>
+    </div>`;
+  }).join('');
+}
+
+async function confirmCancel(id, dateStr, time, phone) {
+  if (!confirm(`確定要取消這筆預約嗎？\n${dateStr}　${time}`)) return;
+
+  const btn = document.getElementById('cancel-btn-' + id);
+  if (btn) { btn.disabled = true; btn.textContent = '取消中...'; }
+
+  try {
+    const res = await fetch(API + '?action=deleteAppointment', {
+      method: 'POST',
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (data.success) {
+      allAppointments = allAppointments.filter(a => String(a.id) !== String(id));
+      document.getElementById('cancel-success-detail').innerHTML =
+        `<div class="success-row"><span class="success-label">電話</span><span>${phone}</span></div>
+         <div class="success-row"><span class="success-label">日期</span><span>${dateStr}</span></div>
+         <div class="success-row"><span class="success-label">時間</span><span>${time}</span></div>`;
+      document.getElementById('cancel-screen').style.display = 'none';
+      document.getElementById('cancel-success-screen').style.display = 'block';
+      window.scrollTo(0, 0);
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = '取消預約'; }
+      alert('取消失敗，請再試一次');
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '取消預約'; }
+    alert('連線錯誤，請確認網路後再試');
+  }
+}
+
+function backToCancel() {
+  document.getElementById('cancel-success-screen').style.display = 'none';
+  document.getElementById('cancel-screen').style.display = 'block';
+  document.getElementById('cancel-phone').value = '';
+  document.getElementById('cancel-result-card').style.display = 'none';
+}
 </script>
 </body>
 </html>
