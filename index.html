@@ -694,6 +694,13 @@ function selectCalDay(ds) {
   document.getElementById('apt-date-title').textContent=p[0]+'年'+parseInt(p[1])+'月'+parseInt(p[2])+'日 的預約';
   document.getElementById('btn-show-apt-form').style.display='inline-block';
   renderAptList();
+  // 切換日期後重新產生時段選單
+  updateAptTimeSelect();
+  // 清空已選時間避免帶入舊時段
+  document.getElementById('apt-time').value='';
+  document.getElementById('apt-time-select').value='';
+  document.getElementById('apt-time-custom').style.display='none';
+  document.getElementById('add-apt-msg').textContent='';
 }
 
 function renderAptList() {
