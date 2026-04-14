@@ -80,9 +80,19 @@
 
   .msg-err { color: #a32d2d; font-size: 13px; margin-top: 8px; text-align: center; }
   .loading-text { text-align: center; color: var(--text2); font-size: 13px; padding: 1rem; }
+  .init-loading { position: fixed; top:0; left:0; right:0; bottom:0; background: var(--bg3); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; gap:16px; }
+  .init-spinner { width: 36px; height: 36px; border: 3px solid var(--border2); border-top-color: var(--text); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .init-loading p { font-size: 14px; color: var(--text2); }
 </style>
 </head>
 <body>
+
+<!-- 載入畫面 -->
+<div class="init-loading" id="init-loading">
+  <div class="init-spinner"></div>
+  <p>載入中，請稍候...</p>
+</div>
 
 <div class="header">
   <h1>濟興堂推拿整復所</h1>
@@ -175,6 +185,7 @@ async function loadAppointments() {
     const data = await res.json();
     allAppointments = data.appointments || [];
   } catch(e) { allAppointments = []; }
+  document.getElementById('init-loading').style.display = 'none';
 }
 
 function toDateStr(date) {
