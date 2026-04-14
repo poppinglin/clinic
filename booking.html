@@ -156,7 +156,16 @@
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbzhv9eQSeqr0B_jD9-9x1vnA-273E6MYryqwwRSYQtmB6L6v61F5nBtP5kxF6FY1n3_/exec';
 const MAX_PER_SLOT = 2;
-const TIME_SLOTS = ['08:40','09:20','10:00','10:40','11:20','14:30','15:10','15:50','16:30','17:10','17:50','18:30','19:10','19:50','20:30'];
+const TIME_SLOTS_WEEKDAY = ['09:20','10:00','10:40','11:20','14:30','15:10','15:50','16:30','17:10','17:50','18:30','19:10','19:50','20:30'];
+const TIME_SLOTS_SAT = ['09:20','10:00','10:40','11:20','14:20','15:00','15:40','16:20','17:00','17:40','18:20','19:00','19:40','20:20'];
+const TIME_SLOTS_SUN = ['09:20','10:00','10:40','11:20','14:40','15:20','16:00','16:40','17:20','18:00','18:40'];
+
+function getTimeSlots(dateStr) {
+  const dow = new Date(dateStr).getDay();
+  if (dow === 6) return TIME_SLOTS_SAT;
+  if (dow === 0) return TIME_SLOTS_SUN;
+  return TIME_SLOTS_WEEKDAY;
+}
 
 let calYear, calMonth, selectedDate = '', selectedTime = '', allAppointments = [];
 
@@ -198,7 +207,7 @@ function renderCalendar() {
   for (let d = 1; d <= lastDay; d++) {
     const ds = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     const isPast = ds < today;
-    const availableSlots = TIME_SLOTS.filter(t => getSlotCount(ds, t) < MAX_PER_SLOT).length;
+    const availableSlots = getTimeSlots(ds).filter(t => getSlotCount(ds, t) < MAX_PER_SLOT).length;
     let cls = 'cal-day';
     if (ds === today) cls += ' today';
     if (ds === selectedDate) cls += ' selected';
@@ -231,7 +240,7 @@ function selectDate(ds) {
 function renderSlots() {
   const p = selectedDate.split('-');
   document.getElementById('slot-title').textContent = p[0] + '年' + parseInt(p[1]) + '月' + parseInt(p[2]) + '日 可用時段';
-  const available = TIME_SLOTS.filter(t => getSlotCount(selectedDate, t) < MAX_PER_SLOT);
+  const available = getTimeSlots(selectedDate).filter(t => getSlotCount(selectedDate, t) < MAX_PER_SLOT);
   if (available.length === 0) {
     document.getElementById('slot-list').innerHTML = '<div class="empty-slots">當天時段已全部額滿<br>請選擇其他日期</div>';
     return;
