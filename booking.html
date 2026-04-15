@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>線上預約 — 濟興堂推拿整復所</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -246,6 +247,19 @@ function getTimeSlots(dateStr) {
 
 let calYear, calMonth, selectedDate = '', selectedTime = '', allAppointments = [];
 let lastBookingId = null;
+let lineUserId = '';
+
+async function initLiff() {
+  try {
+    await liff.init({ liffId: '2009808818-ljUNlVss' });
+    if (liff.isLoggedIn()) {
+      const profile = await liff.getProfile();
+      lineUserId = profile.userId;
+    }
+  } catch(e) {
+    // 不在 LINE 環境中，略過
+  }
+}
 let dataReady = false;
 
 const CACHE_KEY = 'clinic_apts';
@@ -407,7 +421,7 @@ async function submitBooking() {
   try {
     const res = await fetch(API + '?action=addAppointment', {
       method: 'POST',
-      body: JSON.stringify({ customerName: name, phone, date: selectedDate, time: selectedTime, note: '顧客自行預約', gender: '', count: 1 })
+      body: JSON.stringify({ customerName: name, phone, date: selectedDate, time: selectedTime, note: '顧客自行預約', gender: '', count: 1, lineUserId })
     });
     const data = await res.json();
     if (data.success) {
@@ -454,6 +468,7 @@ if (_saved) {
   }
 }
 
+initLiff();
 loadAppointments();
 
 // ── 頁籤切換 ──────────────────────────────
