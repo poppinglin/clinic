@@ -225,7 +225,7 @@
       </div>
       <a href="https://line.me/R/ti/p/@176jnbpb" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;background:#06C755;color:#fff;border-radius:8px;padding:13px;font-size:15px;font-weight:500;text-decoration:none;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.02 2 11c0 3.07 1.6 5.78 4.07 7.5L5 21l3.13-1.04C9.3 20.63 10.63 21 12 21c5.52 0 10-4.02 10-9S17.52 2 12 2zm5 12.5h-3.5v-5H15v3.5h2v1.5zm-5 0h-1.5v-5H12v5zm-3 0H7.5V12H9v1h1.5v1.5zm-.5-3H8V10h1.5v1.5z"/></svg>
-        加入LINE好友，預約前2天收提醒
+        加入LINE好友，預約前1天收提醒
       </a>
     </div>
   </div>
@@ -410,6 +410,7 @@ async function submitBooking() {
   const phone = document.getElementById('book-phone').value.trim();
   const msg = document.getElementById('submit-msg');
   const btn = document.getElementById('btn-submit');
+  if (!name) { msg.className = 'msg-err'; msg.textContent = '請填寫姓名'; return; }
   if (!phone) { msg.className = 'msg-err'; msg.textContent = '請填寫電話'; return; }
   if (!selectedDate || !selectedTime) { msg.className = 'msg-err'; msg.textContent = '請選擇日期和時段'; return; }
   // 再次確認時段沒有額滿
