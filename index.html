@@ -369,7 +369,7 @@
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbzAxGLuZWykA8qF42z7CFjYTYYdzjjgfapXw-RA9EBOYkeeL9fF9Sb7AxG82QNX7sQX/exec';
+const API = 'https://script.google.com/macros/s/AKfycbxXVQL2Q-4hJ37wR78rzJrY4-75hH5GA_A09gDTobbyDMf147hiFz3W_wSuisannldA/exec';
 let customersCache = [];
 let visitsCache = [];
 let allAppointments = [];
@@ -377,6 +377,31 @@ let selectedImprovement = '';
 let selectedAptImprovement = '';
 let calYear, calMonth, selectedDate = '', calView = 'month', weekStart = null;
 let dataLoaded = false;
+
+// ===== 本機快取（stale-while-revalidate）=====
+const CACHE_KEY_ALL = 'clinic_all_v2';
+const CACHE_TTL_ALL = 10 * 60 * 1000; // 10 分鐘
+
+function saveAllCache() {
+  try {
+    localStorage.setItem(CACHE_KEY_ALL, JSON.stringify({
+      ts: Date.now(),
+      customers: customersCache,
+      visits: visitsCache,
+      appointments: allAppointments
+    }));
+  } catch(e) {}
+}
+
+function loadAllCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_ALL);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (Date.now() - obj.ts > CACHE_TTL_ALL) return null;
+    return obj;
+  } catch(e) { return null; }
+}
 
 async function api(action, body={}) {
   const res = await fetch(API+'?action='+action, { method:'POST', body: JSON.stringify(body) });
@@ -391,15 +416,46 @@ function setSyncStatus(state, text) {
 // 一次載入所有資料
 async function loadAll(force=false) {
   if (dataLoaded && !force) return;
+
+  // 有快取：立即顯示，背景更新
+  const cached = !force && loadAllCache();
+  if (cached) {
+    customersCache = cached.customers || [];
+    visitsCache = cached.visits || [];
+    allAppointments = cached.appointments || [];
+    dataLoaded = true;
+    setSyncStatus('sync-ok', '已連線 ✓');
+    bgRefresh();
+    return;
+  }
+
   setSyncStatus('sync-ing','載入中...');
   try {
     const data = await api('getAll');
     customersCache = data.customers || [];
     visitsCache = data.visits || [];
     allAppointments = data.appointments || [];
+    saveAllCache();
     dataLoaded = true;
     setSyncStatus('sync-ok','已連線 ✓');
   } catch(e) { setSyncStatus('sync-err','連線失敗'); }
+}
+
+async function bgRefresh() {
+  try {
+    const data = await api('getAll');
+    customersCache = data.customers || [];
+    visitsCache = data.visits || [];
+    allAppointments = data.appointments || [];
+    saveAllCache();
+    setSyncStatus('sync-ok', '已連線 ✓');
+    // 若目前開著某個頁面則靜默刷新
+    if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
+    if (document.getElementById('tab-appointment').classList.contains('active')) {
+      if (calView==='month') renderCalendar(); else renderWeekView();
+      if (selectedDate) renderAptList();
+    }
+  } catch(e) { /* 靜默失敗，快取資料仍可用 */ }
 }
 
 function normPhone(p) { return String(p).replace(/[-\s]/g,'').replace(/^0+/,''); }
@@ -489,6 +545,7 @@ async function addCustomer() {
     if (res.success) {
       const newC={id:res.id,name,phone,gender,age:age||'',note};
       customersCache.push(newC);
+      saveAllCache();
       msg.className='msg-ok'; msg.textContent='✓ 顧客「'+(name||phone)+'」新增成功';
       document.getElementById('new-name').value='';
       document.getElementById('new-phone').value='';
@@ -536,6 +593,7 @@ async function addVisit() {
     if (res.success) {
       const visitTime=document.getElementById('visit-time').value.trim();
         visitsCache.push({id:res.id,customerId:c.id,date,symptoms,treatment,improvement:selectedImprovement||'未填寫',note,time:visitTime});
+        saveAllCache();
       msg.className='msg-ok'; msg.textContent='✓ 記錄已儲存';
       document.getElementById('visit-symptoms').value='';
       document.getElementById('visit-treatment').value='';
@@ -555,6 +613,7 @@ async function deleteCustomer(id) {
     await api('deleteCustomer',{id});
     customersCache=customersCache.filter(c=>String(c.id)!==String(id));
     visitsCache=visitsCache.filter(v=>String(v.customerId)!==String(id));
+    saveAllCache();
     document.getElementById('search-result').innerHTML='<div class="empty">已刪除</div>';
     if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
   } catch(e) { alert('刪除失敗，請再試一次'); }
@@ -565,6 +624,7 @@ async function deleteVisit(id) {
   try {
     await api('deleteVisit',{id});
     visitsCache=visitsCache.filter(v=>String(v.id)!==String(id));
+    saveAllCache();
     const q=document.getElementById('search-input').value.trim();
     if (q) searchCustomer();
     if (document.getElementById('tab-list').classList.contains('active')) renderAllCustomers();
@@ -855,6 +915,7 @@ async function addAppointment() {
     const res=await api('addAppointment',{customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1,symptoms:aptSymptoms.join(','),treatment:aptTreatment});
     if (res.success) {
       allAppointments.push({id:res.id,customerName:name,phone,date:selectedDate,time,note,customerId,gender,count:count||1});
+      saveAllCache();
       // 若有填就診記錄則一併儲存
       const symptomsRaw=document.getElementById('apt-symptoms').value.trim();
       const treatment=document.getElementById('apt-treatment').value.trim();
@@ -862,7 +923,7 @@ async function addAppointment() {
         const symptoms=symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
         const aptVisitTime=document.getElementById('apt-time').value||'';
         const vRes=await api('addVisit',{customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:'',time:aptVisitTime});
-        if (vRes.success) visitsCache.push({id:vRes.id,customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:'',time:aptVisitTime});
+        if (vRes.success) { visitsCache.push({id:vRes.id,customerId,date:selectedDate,symptoms,treatment,improvement:selectedAptImprovement||'未填寫',note:'',time:aptVisitTime}); saveAllCache(); }
       }
       const isNew=!findCustomer(phone)||customerId!==existing.id;
       msg.className='msg-ok'; msg.textContent='✓ 預約新增成功'+(isNew?' （已自動建立顧客資料）':'');
@@ -889,6 +950,7 @@ async function deleteAppointment(id) {
   try {
     await api('deleteAppointment',{id});
     allAppointments=allAppointments.filter(a=>String(a.id)!==String(id));
+    saveAllCache();
     renderAptList(); if(calView==='month') renderCalendar(); else renderWeekView();
   } catch(e) { alert('刪除失敗，請再試一次'); }
 }
@@ -928,6 +990,7 @@ async function saveCustomer() {
     if (res.success) {
       const idx = customersCache.findIndex(c=>String(c.id)===String(id));
       if (idx>=0) customersCache[idx] = {...customersCache[idx], name, phone, gender, age, note};
+      saveAllCache();
       msg.style.color='#3b6d11'; msg.textContent='✓ 儲存成功';
       setTimeout(()=>{
         closeModal('modal-customer');
@@ -978,6 +1041,7 @@ async function saveVisit() {
     if (res.success) {
       const idx = visitsCache.findIndex(v=>String(v.id)===String(id));
       if (idx>=0) visitsCache[idx] = {...visitsCache[idx], date, time, symptoms, treatment, improvement: editImprovement||'未填寫', note};
+      saveAllCache();
       msg.style.color='#3b6d11'; msg.textContent='✓ 儲存成功';
       setTimeout(()=>{
         closeModal('modal-visit');
