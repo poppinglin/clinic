@@ -370,7 +370,18 @@ function selectDate(ds) {
 function renderSlots() {
   const p = selectedDate.split('-');
   document.getElementById('slot-title').textContent = p[0] + '年' + parseInt(p[1]) + '月' + parseInt(p[2]) + '日 可用時段';
-  const available = getTimeSlots(selectedDate).filter(t => getSlotCount(selectedDate, t) < MAX_PER_SLOT);
+  const todayStr = toDateStr(new Date());
+  const now = new Date();
+  const available = getTimeSlots(selectedDate).filter(t => {
+    if (getSlotCount(selectedDate, t) >= MAX_PER_SLOT) return false;
+    if (selectedDate === todayStr) {
+      const [h, m] = t.split(':').map(Number);
+      const slotTime = new Date();
+      slotTime.setHours(h, m, 0, 0);
+      if (slotTime <= now) return false;
+    }
+    return true;
+  });
   if (available.length === 0) {
     document.getElementById('slot-list').innerHTML = '<div class="empty-slots">當天時段已全部額滿<br>請選擇其他日期</div>';
     return;
