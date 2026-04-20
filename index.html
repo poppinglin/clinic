@@ -168,8 +168,7 @@
 <div class="wrap">
   <div class="tab-row">
     <button class="tab active" onclick="switchTab('search',this)">查詢顧客</button>
-    <button class="tab" onclick="switchTab('add-customer',this)">新增顧客</button>
-    <button class="tab" onclick="switchTab('add-visit',this)">新增就診記錄</button>
+    <button class="tab" onclick="switchTab('add-record',this)">新增記錄</button>
     <button class="tab" onclick="switchTab('list',this)">所有顧客</button>
     <button class="tab" onclick="switchTab('appointment',this)">預約管理</button>
   </div>
@@ -182,43 +181,44 @@
     <div id="search-result"><div class="empty">輸入電話號碼查詢顧客資料</div></div>
   </div>
 
-  <div id="tab-add-customer" class="tab-content">
+  <div id="tab-add-record" class="tab-content">
     <div class="card">
-      <div class="section-label" style="margin-bottom:14px;">新增顧客資料</div>
+      <div class="section-label" style="margin-bottom:14px;">顧客資料</div>
       <div class="form-grid">
-        <div class="form-group"><label>姓名（選填）</label><input type="text" id="new-name" placeholder="顧客姓名" /></div>
-        <div class="form-group"><label>電話 *</label><input type="text" id="new-phone" placeholder="0912345678" /></div>
-        <div class="form-group"><label>性別</label><select id="new-gender"><option value="">不填</option><option value="男">男</option><option value="女">女</option></select></div>
-        <div class="form-group"><label>年齡</label><input type="number" id="new-age" placeholder="例：45" min="1" max="120" /></div>
+        <div class="form-group"><label>電話 *</label><input type="text" id="record-phone" placeholder="0912345678" oninput="lookupRecordCustomer()" /></div>
+        <div class="form-group"><label>姓名（選填）</label><input type="text" id="record-name" placeholder="顧客姓名" /></div>
+        <div class="form-group"><label>性別</label><select id="record-gender"><option value="">不填</option><option value="男">男</option><option value="女">女</option></select></div>
+        <div class="form-group"><label>年齡</label><input type="number" id="record-age" placeholder="例：45" min="1" max="120" /></div>
       </div>
-      <div class="form-group" style="margin-bottom:14px;"><label>備註</label><textarea id="new-note" placeholder="其他備註（過敏、特殊狀況等）"></textarea></div>
-      <button class="btn btn-primary" id="btn-add-customer" onclick="addCustomer()">新增顧客</button>
-      <span id="add-customer-msg"></span>
-    </div>
-  </div>
+      <div id="record-customer-info" style="margin-bottom:10px;"></div>
+      <div class="form-group" style="margin-bottom:4px;"><label>顧客備註</label><textarea id="record-customer-note" placeholder="過敏、特殊狀況等"></textarea></div>
 
-  <div id="tab-add-visit" class="tab-content">
-    <div class="card">
-      <div class="section-label" style="margin-bottom:14px;">新增就診記錄</div>
+      <div class="divider"></div>
+      <div class="section-label" style="margin-bottom:14px;">就診記錄</div>
       <div class="form-grid">
-        <div class="form-group"><label>顧客電話 *</label><input type="text" id="visit-phone" placeholder="輸入電話查找顧客" oninput="lookupVisitCustomer()" /></div>
-        <div class="form-group"><label>就診日期 *</label><input type="date" id="visit-date" /></div>
-        <div class="form-group"><label>就診時間（選填）</label><input type="text" id="visit-time" placeholder="例如 10:40" /></div>
+        <div class="form-group"><label>就診日期 *</label><input type="date" id="record-date" onchange="updateRecordTimeSelect()" /></div>
+        <div class="form-group">
+          <label>就診時間（選填）</label>
+          <select id="record-time-select" onchange="handleRecordTimeSelect()">
+            <option value="">— 選擇時間 —</option>
+          </select>
+          <input type="text" id="record-time-custom" placeholder="請輸入時間，例如 13:15" style="margin-top:6px;display:none;" />
+          <input type="hidden" id="record-time" />
+        </div>
       </div>
-      <div id="visit-customer-info" style="margin-bottom:10px;"></div>
-      <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（多個症狀用逗號分隔）*</label><textarea id="visit-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛"></textarea></div>
-      <div class="form-group" style="margin-bottom:10px;"><label>處理方式</label><textarea id="visit-treatment" placeholder="例：推拿、針灸、熱敷..."></textarea></div>
+      <div class="form-group" style="margin-bottom:10px;"><label>身體症狀（多個症狀用逗號分隔）*</label><textarea id="record-symptoms" placeholder="例：肩頸痠痛、下背痛、頭痛"></textarea></div>
+      <div class="form-group" style="margin-bottom:10px;"><label>處理方式</label><textarea id="record-treatment" placeholder="例：推拿、針灸、熱敷..."></textarea></div>
       <div class="form-group" style="margin-bottom:14px;">
         <label>改善程度</label>
         <div class="improve-select">
-          <button class="improve-opt" id="opt-improve" onclick="selectImprove('明顯改善')">明顯改善</button>
-          <button class="improve-opt" id="opt-partial" onclick="selectImprove('部分改善')">部分改善</button>
-          <button class="improve-opt" id="opt-none" onclick="selectImprove('未明顯改善')">未明顯改善</button>
+          <button class="improve-opt" id="rec-opt-improve" onclick="selectRecordImprove('明顯改善')">明顯改善</button>
+          <button class="improve-opt" id="rec-opt-partial" onclick="selectRecordImprove('部分改善')">部分改善</button>
+          <button class="improve-opt" id="rec-opt-none" onclick="selectRecordImprove('未明顯改善')">未明顯改善</button>
         </div>
       </div>
-      <div class="form-group" style="margin-bottom:14px;"><label>備註</label><input type="text" id="visit-note" placeholder="其他備註..." /></div>
-      <button class="btn btn-primary" id="btn-add-visit" onclick="addVisit()">儲存記錄</button>
-      <span id="add-visit-msg"></span>
+      <div class="form-group" style="margin-bottom:14px;"><label>備註</label><input type="text" id="record-visit-note" placeholder="其他備註..." /></div>
+      <button class="btn btn-primary" id="btn-add-record" onclick="addRecord()">儲存記錄</button>
+      <span id="add-record-msg"></span>
     </div>
   </div>
 
@@ -302,13 +302,9 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
     查詢
   </button>
-  <button class="bottom-nav-item" id="bnav-add-customer" onclick="switchTabMobile('add-customer',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-    新增顧客
-  </button>
-  <button class="bottom-nav-item" id="bnav-add-visit" onclick="switchTabMobile('add-visit',this)">
+  <button class="bottom-nav-item" id="bnav-add-record" onclick="switchTabMobile('add-record',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-    就診記錄
+    新增記錄
   </button>
   <button class="bottom-nav-item" id="bnav-list" onclick="switchTabMobile('list',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -375,6 +371,7 @@ let visitsCache = [];
 let allAppointments = [];
 let selectedImprovement = '';
 let selectedAptImprovement = '';
+let selectedRecordImprovement = '';
 let calYear, calMonth, selectedDate = '', calView = 'month', weekStart = null;
 let dataLoaded = false;
 
@@ -477,7 +474,11 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
-  if (name==='add-visit') document.getElementById('visit-date').value=new Date().toISOString().split('T')[0];
+  if (name==='add-record') {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('record-date').value = today;
+    updateRecordTimeSelect();
+  }
   if (name==='list') renderAllCustomers();
   if (name==='appointment') initCalendar();
 }
@@ -555,6 +556,114 @@ async function addCustomer() {
     } else { msg.className='msg-err'; msg.textContent='新增失敗，請再試一次'; }
   } catch(e) { msg.className='msg-err'; msg.textContent='連線錯誤，請確認網路'; }
   btn.disabled=false; btn.textContent='新增顧客';
+}
+
+// ===== 新增記錄（合併顧客＋就診）=====
+function lookupRecordCustomer() {
+  const q = document.getElementById('record-phone').value.trim();
+  const el = document.getElementById('record-customer-info');
+  if (!q) { el.innerHTML=''; return; }
+  const c = findCustomer(q);
+  if (c) {
+    el.innerHTML='<span class="info-pill">找到顧客：'+displayName(c)+(c.age?' （'+c.age+'歲）':'')+'</span>';
+    document.getElementById('record-name').value = c.name||'';
+    document.getElementById('record-gender').value = c.gender||'';
+    document.getElementById('record-age').value = c.age||'';
+    document.getElementById('record-customer-note').value = c.note||'';
+  } else {
+    el.innerHTML='<span class="warn-pill">新顧客，將自動建立資料</span>';
+  }
+}
+
+function updateRecordTimeSelect() {
+  const dateVal = document.getElementById('record-date').value;
+  const sel = document.getElementById('record-time-select');
+  const slots = getAptSlots(dateVal);
+  let html = '<option value="">— 選擇時間 —</option>';
+  slots.forEach(t => { html += '<option value="'+t+'">'+t+'</option>'; });
+  html += '<option value="other">其他時間（自行輸入）</option>';
+  sel.innerHTML = html;
+  document.getElementById('record-time-custom').style.display='none';
+  document.getElementById('record-time').value='';
+}
+
+function handleRecordTimeSelect() {
+  const sel = document.getElementById('record-time-select').value;
+  const custom = document.getElementById('record-time-custom');
+  const hidden = document.getElementById('record-time');
+  if (sel==='other') {
+    custom.style.display='block';
+    custom.oninput = ()=>{ hidden.value=custom.value.trim(); };
+    hidden.value='';
+  } else {
+    custom.style.display='none';
+    hidden.value=sel;
+  }
+}
+
+function selectRecordImprove(val) {
+  selectedRecordImprovement=val;
+  document.getElementById('rec-opt-improve').className='improve-opt'+(val==='明顯改善'?' sel-improve':'');
+  document.getElementById('rec-opt-partial').className='improve-opt'+(val==='部分改善'?' sel-partial':'');
+  document.getElementById('rec-opt-none').className='improve-opt'+(val==='未明顯改善'?' sel-none':'');
+}
+
+async function addRecord() {
+  const phone = document.getElementById('record-phone').value.trim();
+  const name  = document.getElementById('record-name').value.trim();
+  const gender = document.getElementById('record-gender').value;
+  const age   = document.getElementById('record-age').value;
+  const customerNote = document.getElementById('record-customer-note').value.trim();
+  const date  = document.getElementById('record-date').value;
+  const time  = document.getElementById('record-time').value;
+  const symptomsRaw = document.getElementById('record-symptoms').value.trim();
+  const treatment   = document.getElementById('record-treatment').value.trim();
+  const visitNote   = document.getElementById('record-visit-note').value.trim();
+  const msg = document.getElementById('add-record-msg');
+  const btn = document.getElementById('btn-add-record');
+
+  if (!phone) { msg.className='msg-err'; msg.textContent='電話為必填'; return; }
+  if (!date)  { msg.className='msg-err'; msg.textContent='請填寫就診日期'; return; }
+  if (!symptomsRaw) { msg.className='msg-err'; msg.textContent='請填寫症狀'; return; }
+
+  const symptoms = symptomsRaw.split(/[，,、\n]+/).map(s=>s.trim()).filter(Boolean);
+  btn.disabled=true; btn.textContent='儲存中...';
+  try {
+    // 找顧客，沒有就自動建立
+    let customer = findCustomer(phone);
+    let customerId = '';
+    if (!customer) {
+      const cRes = await api('addCustomer', {name, phone, gender, age:age||'', note:customerNote});
+      if (cRes.success) {
+        customerId = cRes.id;
+        customer = {id:cRes.id, name, phone, gender, age:age||'', note:customerNote};
+        customersCache.push(customer);
+      } else { msg.className='msg-err'; msg.textContent='建立顧客失敗'; btn.disabled=false; btn.textContent='儲存記錄'; return; }
+    } else {
+      customerId = customer.id;
+    }
+    // 新增就診記錄
+    const vRes = await api('addVisit', {customerId, date, symptoms, treatment, improvement:selectedRecordImprovement||'未填寫', note:visitNote, time});
+    if (vRes.success) {
+      visitsCache.push({id:vRes.id, customerId, date, symptoms, treatment, improvement:selectedRecordImprovement||'未填寫', note:visitNote, time});
+      saveAllCache();
+      msg.className='msg-ok'; msg.textContent='✓ 記錄已儲存'+(customer.name?' （'+customer.name+'）':'');
+      document.getElementById('record-phone').value='';
+      document.getElementById('record-name').value='';
+      document.getElementById('record-gender').value='';
+      document.getElementById('record-age').value='';
+      document.getElementById('record-customer-note').value='';
+      document.getElementById('record-symptoms').value='';
+      document.getElementById('record-treatment').value='';
+      document.getElementById('record-visit-note').value='';
+      document.getElementById('record-time-select').value='';
+      document.getElementById('record-time-custom').style.display='none';
+      document.getElementById('record-time').value='';
+      document.getElementById('record-customer-info').innerHTML='';
+      selectedRecordImprovement=''; selectRecordImprove('');
+    } else { msg.className='msg-err'; msg.textContent='儲存就診記錄失敗'; }
+  } catch(e) { msg.className='msg-err'; msg.textContent='連線錯誤，請確認網路'; }
+  btn.disabled=false; btn.textContent='儲存記錄';
 }
 
 function lookupVisitCustomer() {
@@ -1055,7 +1164,7 @@ async function saveVisit() {
 
 // 手機底部導覽切換
 function switchTabMobile(name, btn) {
-  switchTab(name, document.querySelector('.tab-row .tab:nth-child(' + (['search','add-customer','add-visit','list','appointment'].indexOf(name)+1) + ')') || btn);
+  switchTab(name, document.querySelector('.tab-row .tab:nth-child(' + (['search','add-record','list','appointment'].indexOf(name)+1) + ')') || btn);
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
