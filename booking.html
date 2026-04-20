@@ -54,6 +54,10 @@
   .slot.full { background: var(--bg3); color: var(--text3); cursor: not-allowed; text-decoration: line-through; }
   .slot-remaining { font-size: 10px; color: var(--text3); margin-top: 2px; }
   .slot.selected .slot-remaining { color: rgba(255,255,255,0.6); }
+  .count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .count-btn { padding: 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border2); text-align: center; cursor: pointer; font-size: 16px; font-weight: 500; transition: all 0.12s; background: var(--bg2); color: var(--text); }
+  .count-btn:hover { border-color: var(--text); }
+  .count-btn.selected { background: var(--text); color: var(--bg); border-color: var(--text); }
 
   /* 表單 */
   .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
@@ -144,13 +148,22 @@
     <div class="cal-grid" id="cal-body"></div>
   </div>
 
-  <!-- 步驟二：選時段 -->
+  <!-- 步驟二：選人數 -->
+  <div class="card">
+    <div class="card-title">預約人數</div>
+    <div class="count-grid">
+      <div class="count-btn selected" id="count-btn-1" onclick="selectCount(1)">1 位</div>
+      <div class="count-btn" id="count-btn-2" onclick="selectCount(2)">2 位</div>
+    </div>
+  </div>
+
+  <!-- 步驟三：選時段 -->
   <div class="card" id="slot-card">
     <div class="card-title" id="slot-title">選擇時段</div>
     <div id="slot-list"><div class="select-date-hint">請先選擇日期</div></div>
   </div>
 
-  <!-- 步驟三：填資料 -->
+  <!-- 步驟四：填資料 -->
   <div class="card" id="form-card" style="display:none;">
     <div class="card-title">填寫預約資料</div>
     <div class="form-group">
@@ -217,6 +230,7 @@
         <div class="success-row"><span class="success-label">電話</span><span id="s-phone"></span></div>
         <div class="success-row"><span class="success-label">日期</span><span id="s-date"></span></div>
         <div class="success-row"><span class="success-label">時間</span><span id="s-time"></span></div>
+        <div class="success-row"><span class="success-label">人數</span><span id="s-count"></span></div>
       </div>
       <div style="display:flex;gap:10px;margin-top:8px;">
         <button class="btn-again" onclick="resetBooking()" style="flex:1;">再次預約</button>
@@ -247,6 +261,7 @@ function getTimeSlots(dateStr) {
 let calYear, calMonth, selectedDate = '', selectedTime = '', allAppointments = [];
 let lastBookingId = null;
 let lineUserId = '';
+let selectedCount = 1;
 
 async function initLiff() {
   try {
@@ -319,7 +334,18 @@ function toDateStr(date) {
 }
 
 function getSlotCount(date, time) {
-  return allAppointments.filter(a => String(a.date) === date && String(a.time) === time).length;
+  return allAppointments
+    .filter(a => String(a.date) === date && String(a.time) === time)
+    .reduce((sum, a) => sum + (parseInt(a.count) || 1), 0);
+}
+
+function selectCount(n) {
+  selectedCount = n;
+  document.getElementById('count-btn-1').classList.toggle('selected', n === 1);
+  document.getElementById('count-btn-2').classList.toggle('selected', n === 2);
+  selectedTime = '';
+  if (selectedDate) renderSlots();
+  document.getElementById('form-card').style.display = 'none';
 }
 
 function initCalendar() {
@@ -380,7 +406,7 @@ function renderSlots() {
   const todayStr = toDateStr(new Date());
   const now = new Date();
   const available = getTimeSlots(selectedDate).filter(t => {
-    if (getSlotCount(selectedDate, t) >= MAX_PER_SLOT) return false;
+    if (getSlotCount(selectedDate, t) + selectedCount > MAX_PER_SLOT) return false;
     if (selectedDate === todayStr) {
       const [h, m] = t.split(':').map(Number);
       const slotTime = new Date();
@@ -390,7 +416,8 @@ function renderSlots() {
     return true;
   });
   if (available.length === 0) {
-    document.getElementById('slot-list').innerHTML = '<div class="empty-slots">當天時段已全部額滿<br>請選擇其他日期</div>';
+    const hint = selectedCount === 2 ? '當天已無可供 2 位同時預約的時段<br>請選擇人數 1 位或改選其他日期' : '當天時段已全部額滿<br>請選擇其他日期';
+    document.getElementById('slot-list').innerHTML = '<div class="empty-slots">' + hint + '</div>';
     return;
   }
   let html = '<div class="slots-grid">';
@@ -431,28 +458,29 @@ async function submitBooking() {
   if (!name) { msg.className = 'msg-err'; msg.textContent = '請填寫姓名'; return; }
   if (!phone) { msg.className = 'msg-err'; msg.textContent = '請填寫電話'; return; }
   if (!selectedDate || !selectedTime) { msg.className = 'msg-err'; msg.textContent = '請選擇日期和時段'; return; }
-  // 再次確認時段沒有額滿
-  if (getSlotCount(selectedDate, selectedTime) >= MAX_PER_SLOT) {
-    msg.className = 'msg-err'; msg.textContent = '此時段剛剛已額滿，請重新選擇';
+  // 再次確認時段容量足夠
+  if (getSlotCount(selectedDate, selectedTime) + selectedCount > MAX_PER_SLOT) {
+    msg.className = 'msg-err'; msg.textContent = '此時段名額不足，請重新選擇';
     renderSlots(); return;
   }
   btn.disabled = true; btn.textContent = '送出中，請稍候...';
   try {
     const res = await fetch(API + '?action=addAppointment', {
       method: 'POST',
-      body: JSON.stringify({ customerName: name, phone, date: selectedDate, time: selectedTime, note: '顧客自行預約', gender: '', count: 1, lineUserId })
+      body: JSON.stringify({ customerName: name, phone, date: selectedDate, time: selectedTime, note: '顧客自行預約', gender: '', count: selectedCount, lineUserId })
     });
     const data = await res.json();
     if (data.success) {
       saveCustomerInfo(name, phone);
       lastBookingId = data.id;
-      allAppointments.push({ id: data.id, customerName: name, phone, date: selectedDate, time: selectedTime });
+      allAppointments.push({ id: data.id, customerName: name, phone, date: selectedDate, time: selectedTime, count: selectedCount });
       saveCache(allAppointments);
       document.getElementById('s-name').textContent = name;
       document.getElementById('s-phone').textContent = phone;
       const p = selectedDate.split('-');
       document.getElementById('s-date').textContent = p[0] + '年' + parseInt(p[1]) + '月' + parseInt(p[2]) + '日';
       document.getElementById('s-time').textContent = selectedTime;
+      document.getElementById('s-count').textContent = selectedCount + ' 位';
       document.getElementById('main-screen').style.display = 'none';
       document.getElementById('success-screen').style.display = 'block';
       window.scrollTo(0, 0);
@@ -464,13 +492,15 @@ async function submitBooking() {
 }
 
 function resetBooking() {
-  selectedDate = ''; selectedTime = '';
+  selectedDate = ''; selectedTime = ''; selectedCount = 1;
   document.getElementById('book-name').value = '';
   document.getElementById('book-phone').value = '';
   document.getElementById('submit-msg').textContent = '';
   document.getElementById('form-card').style.display = 'none';
   document.getElementById('slot-list').innerHTML = '<div class="select-date-hint">請先選擇日期</div>';
   document.getElementById('slot-title').textContent = '選擇時段';
+  document.getElementById('count-btn-1').classList.add('selected');
+  document.getElementById('count-btn-2').classList.remove('selected');
   document.getElementById('main-screen').style.display = 'block';
   document.getElementById('success-screen').style.display = 'none';
   renderCalendar();
