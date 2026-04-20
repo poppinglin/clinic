@@ -744,7 +744,18 @@ function renderAllCustomers() {
   const el=document.getElementById('all-customers-list');
   if (!dataLoaded) { el.innerHTML=loading('載入中...'); loadAll().then(()=>renderAllCustomers()); return; }
   if (customersCache.length===0) { el.innerHTML='<div class="empty">尚無顧客資料</div>'; return; }
-  const sorted=[...customersCache].sort((a,b)=>String(displayName(a)).localeCompare(String(displayName(b)),'zh-TW'));
+  const latestVisit = c => {
+    const visits = visitsCache.filter(v=>String(v.customerId)===String(c.id));
+    if (visits.length===0) return '';
+    return visits.map(v=>String(v.date)).sort().reverse()[0];
+  };
+  const sorted=[...customersCache].sort((a,b)=>{
+    const da=latestVisit(a), db=latestVisit(b);
+    if (da===db) return String(displayName(a)).localeCompare(String(displayName(b)),'zh-TW');
+    if (!da) return 1;
+    if (!db) return -1;
+    return db.localeCompare(da);
+  });
   el.innerHTML=sorted.map(c=>renderCustomerCard(c)).join('');
 }
 
