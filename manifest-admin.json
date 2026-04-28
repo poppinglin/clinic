@@ -11,7 +11,7 @@
   "lang": "zh-TW",
   "icons": [
     {
-      "src": "/clinic/icon.svg",
+      "src": "/clinic/icon-admin.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
