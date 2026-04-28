@@ -1,0 +1,20 @@
+{
+  "name": "濟興堂 顧客管理系統",
+  "short_name": "濟興堂管理",
+  "description": "濟興堂推拿整復所內部顧客健康記錄管理系統",
+  "start_url": "/clinic/",
+  "scope": "/clinic/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eeede8",
+  "theme_color": "#1a1a18",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "/clinic/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
