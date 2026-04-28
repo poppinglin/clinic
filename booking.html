@@ -4,6 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>線上預約 — 濟興堂推拿整復所</title>
+<link rel="manifest" href="/clinic/manifest.json" />
+<meta name="theme-color" content="#1a1a18" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="濟興堂預約" />
+<link rel="apple-touch-icon" href="/clinic/icon.svg" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -519,6 +526,11 @@ if (_saved) {
 
 initLiff();
 loadAppointments();
+
+// ── PWA Service Worker 註冊 ──────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/clinic/sw.js').catch(() => {});
+}
 
 // ── 頁籤切換 ──────────────────────────────
 function switchPage(page) {

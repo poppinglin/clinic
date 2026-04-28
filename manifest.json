@@ -1,0 +1,20 @@
+{
+  "name": "濟興堂推拿整復所 線上預約",
+  "short_name": "濟興堂預約",
+  "description": "濟興堂推拿整復所線上預約系統",
+  "start_url": "/clinic/booking.html",
+  "scope": "/clinic/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f5f3",
+  "theme_color": "#1a1a18",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "/clinic/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
